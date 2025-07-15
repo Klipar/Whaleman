@@ -14,7 +14,7 @@ from telegram_info_bot import TG_LOG, TG_LOG_ORDER
 
 class Bybit:
     def __init__(self, conf):
-        
+
         self.publicKey = conf.get_value(parameter1="exchange",parameter2="Bybit", parameter3="API Pyblic Key")
         self.sycretKey = conf.get_value(parameter1="exchange",parameter2="Bybit", parameter3="API Secret Key")
         self.No_Treyde = conf.get_value(parameter1="exchange",parameter2="Treyd", parameter3="No Treyd")
@@ -35,7 +35,7 @@ class Bybit:
         self.Position_Multiplayer = float(conf.get_value(parameter1="exchange",parameter2="Treyd", parameter3="Multiplier to increase the deal value"))
         self.Max_Position_Value = float(self.Get_Max_Position_Value(conf))
         self.Next_Persent_step = float(conf.get_value(parameter1="exchange",parameter2="Treyd", parameter3="Next steps prise in percent moowing from last order prise"))
-        
+
         self.FirstStepPersent = float(conf.get_value(parameter1="exchange",parameter2="Treyd", parameter3="First step in persent from treyding balance"))
         self.leverage = float(conf.get_value(parameter1="exchange",parameter2="Treyd", parameter3="leverage"))
         self.MaxOrderPerCoin = int(conf.get_value(parameter1="exchange",parameter2="Treyd", parameter3="Max orders per coin"))
@@ -56,48 +56,49 @@ class Bybit:
                                 # PREPEARING TO PLASE ORDER
                                 symbol = coin.Get_Coin()
                                 qty = coin.Round_Qty((PositionValue_No_Laverage*self.Position_Multiplayer))
-                                if (side == "Buy"): 
+                                if (side == "Buy"):
                                     prise      = coin.Round_Prise(coin.Get_Last_Prise() + ((coin.Get_Last_Prise()/100)*self.Sliding_Persend))
                                     takeProfit = coin.Round_Prise(coin.Get_Last_Prise() + ((coin.Get_Last_Prise()/100)*self.TakeProfitPersent))
                                     stopLoss   = coin.Round_Prise(coin.Get_Last_Prise() - ((coin.Get_Last_Prise()/100)*self.StopLoss_Persent))
-                                else: 
+                                else:
                                     prise = coin.Round_Prise(coin.Get_Last_Prise() - ((coin.Get_Last_Prise()/100)*self.Sliding_Persend))
                                     takeProfit = coin.Round_Prise(coin.Get_Last_Prise() - ((coin.Get_Last_Prise()/100)*self.TakeProfitPersent))
                                     stopLoss   = coin.Round_Prise(coin.Get_Last_Prise() + ((coin.Get_Last_Prise()/100)*self.StopLoss_Persent))
                                 # Plasing ORDERRRRR
                                     # success("=======================================================")
-                                    # test (f"symbol = {symbol}, qty = {qty}, prise = {prise}, side = {side}, takeProfit = {takeProfit}, stopLoss = {stopLoss}")                                
+                                    # test (f"symbol = {symbol}, qty = {qty}, prise = {prise}, side = {side}, takeProfit = {takeProfit}, stopLoss = {stopLoss}")
                                     # success("=======================================================")
                                     self.PlaseOrder(symbol = symbol, qty = qty, prise = prise, side = side, takeProfit = takeProfit, stopLoss = stopLoss)
-                        else: 
+                        else:
                             return
                     failed ("Failed to plase order. limit are accesed")
                     # pr(self.Positions)
                     return
-        
+
         # warn (f"All Goood to plase order for {side}")
         # PREPEARING TO PLASE ORDER
         symbol = coin.Get_Coin()
-        
+
         qty = coin.Round_Qty((((self.Balanse/100)*self.FirstStepPersent)/coin.Get_Last_Prise())*self.leverage)
-        if (side == "Buy"): 
+        if (side == "Buy"):
             prise      = coin.Round_Prise(coin.Get_Last_Prise() + ((coin.Get_Last_Prise()/100)*self.Sliding_Persend))
             takeProfit = coin.Round_Prise(coin.Get_Last_Prise() + ((coin.Get_Last_Prise()/100)*self.TakeProfitPersent))
             stopLoss   = coin.Round_Prise(coin.Get_Last_Prise() - ((coin.Get_Last_Prise()/100)*self.StopLoss_Persent))
-        else: 
+        else:
             prise = coin.Round_Prise(coin.Get_Last_Prise() - ((coin.Get_Last_Prise()/100)*self.Sliding_Persend))
             takeProfit = coin.Round_Prise(coin.Get_Last_Prise() - ((coin.Get_Last_Prise()/100)*self.TakeProfitPersent))
             stopLoss   = coin.Round_Prise(coin.Get_Last_Prise() + ((coin.Get_Last_Prise()/100)*self.StopLoss_Persent))
         # Plasing ORDERRRRR
         success("=======================================================")
-        test (f"symbol = {symbol}, qty = {qty}, prise = {prise}, side = {side}, takeProfit = {takeProfit}, stopLoss = {stopLoss}")                                
+        test (f"symbol = {symbol}, qty = {qty}, prise = {prise}, side = {side}, takeProfit = {takeProfit}, stopLoss = {stopLoss}")
         success("=======================================================")
         self.PlaseOrder(symbol = symbol, qty = qty, prise = prise, side = side, takeProfit = takeProfit, stopLoss = stopLoss)
-        
-    
+
+
     def PlaseOrder(self, symbol, qty, prise, side, takeProfit, stopLoss, order_tipe = "Limit"):
         warn(f"--> {side} {symbol}")
-        
+
+
         if (self.No_Treyde == True):
             failed (f"skped, no trade = {self.No_Treyde}")
             # self.bot.SEND_TG(warn(f"--> {side} {symbol}"))
@@ -116,7 +117,7 @@ class Bybit:
             # TG_LOG(f"--> {side} {symbol}")
             self.Refresh_Positions()
             TG_LOG_ORDER(side = side, prise = prise, takeProfit = takeProfit, stopLoss = stopLoss, symbol = symbol, qty = qty, leverage = self.leverage)
-            
+
             # self.bot.SEND_TG(warn(f"--> {side} {symbol}"))
             # pr ("GOOOOD")
         except Exception as e:
@@ -157,14 +158,14 @@ class Bybit:
 
             # Виконання всіх завдань
             results = await asyncio.gather(*tasks)
-            
+
             return(results)
 
     def Subscribe (self, conf, coin_hab):
         inform (f"Subskribing....")
         coins = conf.get_value(parameter1="exchange",parameter2="Coins")
 
-        bar = LineProgresBar(MaxLength = 50, text = "Loading ", maxWalue = len(coins), isShowPersent = True, isShowWalue = True)        
+        bar = LineProgresBar(MaxLength = 50, text = "Loading ", maxWalue = len(coins), isShowPersent = True, isShowWalue = True)
 
         self.ws = WebSocket(
             testnet=False,
@@ -184,6 +185,35 @@ class Bybit:
             category=self.Category,
             settleCoin=self.SettleCoin,
         ))
+
+
+        for i in response['result']['list']:
+            if (int(response['time']) >= int(i['updatedTime'])+1000*self.Candel_time*self.CountOfCandleBeforeMarketStop*60 and i['unrealisedPnl'] <= 0.05):
+                # print (i['updatedTime'])
+
+                t = (self.session.get_kline(
+                    category="linear",
+                    symbol=i['symbol'],
+                    interval=1,
+                    limit=1
+                ))
+
+                try:
+                    (self.session.set_trading_stop(
+                        category="linear",
+                        symbol=i['symbol'],
+                        stopLoss = float(t['result']['list'][0][4]),
+                        # take_profit = float(t['result']['list'][0][4])+3,
+                        # TrailingStop = 0.1,
+                        slTriggerBy="MarkPrice",
+                        positionIdx=0
+                    ))
+                    warn (f"canseled order on {i['symbol']}")
+                except Exception as e:
+                    print ("e")
+
+
+
         if (int(response["retCode"]) == 0):
             if (len (response['result']['list'])> 0):
                 # pr (response['result']['list'])
@@ -191,7 +221,7 @@ class Bybit:
                 return response['result']['list']
             self.Positions = None
             return None
-            
+
     def Get_Max_Position_Value (self, conf):
         self.Balanse
         Max_Position_Persent = float(conf.get_value(parameter1="exchange",parameter2="Treyd", parameter3="Max position persent from balance"))
