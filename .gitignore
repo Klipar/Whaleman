@@ -1,1 +1,4 @@
 Configs/
+__pycache__/
+.venv
+APIKeys/
