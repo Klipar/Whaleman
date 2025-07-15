@@ -1,18 +1,15 @@
 from easy.massage import failed, success, inform, warn, test, pr
 import asyncio
 import aiohttp
-from conditions import CONDIRION
+from conditions import CONDITION
 # import json
 from easy.animations import *
 
 class Coin:
-    def __init__(self, conf, coin, Bybit):        
+    def __init__(self, conf, coin, Bybit):
         self.Limit_of_Candels = conf.get_value(parameter1="exchange",parameter2="Treyd", parameter3="Max count of cendals for awereg a treyd wolume")
         self.Coin = coin
-        
-        # self.Curent_order_prise = 0
-        # self.Number_of_contracts = 0
-        
+
         self.Bybit = Bybit
         self.conf = conf
 
@@ -44,15 +41,15 @@ class Coin:
         return (round(float(qty) / self.Qty_Step_for_Round) * self.Qty_Step_for_Round)
     def Round_Prise (self, prise):
         return round(float(prise), self.Prise_Rounf)
-    
+
     def Set_Round(self, response):
         # pr (response)
         self.Prise_Rounf = int(response['priceScale'])
         self.Qty_Step_for_Round = float(response['lotSizeFilter']['qtyStep'])
-    
+
     def Process_Values(self, data):
         if (int(data['data'][0]['start']) == int(self.Last_Candle_Start_time)):
-            
+
             # self.List_of_walues[0][self.Limit_of_Candels-1] = float(data['data'][0]['open'])
             self.List_of_walues[1][0] = float(data['data'][0]['high'])
             self.List_of_walues[2][0] = float(data['data'][0]['low'])
@@ -69,7 +66,7 @@ class Coin:
             self.List_of_walues[2].insert(0, float(data['data'][0]['low']))
             self.List_of_walues[3].insert(0, float(data['data'][0]['close']))
             self.List_of_walues[4].insert(0, float(data['data'][0]['turnover']))
-            
+
             self.Last_Candle_Start_time = int(data['data'][0]['start'])
             self.Curent_Candle_Time = int(data['data'][0]['timestamp'])-int(data['data'][0]['start'])
         else:
@@ -83,7 +80,7 @@ class Coin:
 
             warn ("Data come after one candle, restructing....")
             warn (data['topic'])
-        CONDIRION(self.conf, self.Bybit, self)
+        CONDITION(self.conf, self.Bybit, self)
 
     def Inicialize (self, data):
         for i in range (0, self.Limit_of_Candels):
@@ -93,29 +90,27 @@ class Coin:
             self.List_of_walues[3][i] = float(data['result']['list'][i][4])
             self.List_of_walues[4][i] = float(data['result']['list'][i][6])
         self.Last_Candle_Start_time = int(data['result']['list'][0][0])
-        # test(self.List_of_walues)
 
     def Get_Last_Prise (self):
         return self.List_of_walues[3][0]
-    
 
 
 class CoinHab:
-    def __init__(self, conf, Bybit):        
+    def __init__(self, conf, Bybit):
         self.animation = SimpleAnimation()
         self.coins = {}              # Створюємо масив об'єктів монет
         self.tresh_text = 'kline.1.' # зайвий текст що приходить в відповіді від сокета. Він видаляється щоб лишити лише назву монети
         self.Coin_Set (conf, Bybit)
         self.SetRounds(conf, Bybit)
         inform (f"Founded {len(self.coins)} Coins")
-    
+
     def SetRounds(self, conf ,Bybit):
         response = Bybit.Get_Instruments_Info()
         for i in response["result"]["list"]:
             for j in ((conf.get_value(parameter1="exchange",parameter2="Coins"))):
                 if (i["symbol"] == j):
                     self.coins[j].Set_Round(i)
-        
+
         # pr (response)
 
 
@@ -129,7 +124,7 @@ class CoinHab:
 
     def Initialize_Coins (self, conf, Bybit):
         result = asyncio.run(Bybit.Get_Cline_For_all(conf.get_value(parameter1="exchange",parameter2="Coins"), conf.get_value(parameter1="exchange",parameter2="Treyd", parameter3="Max count of cendals for awereg a treyd wolume")))
-        # success (result[0])
+
         for i in range (len(self.coins)):
             if (int(result[i]['retCode']) == 0):
                 self.coins[result[i]['result']['symbol']].Inicialize(result[i])
@@ -139,4 +134,4 @@ class CoinHab:
     def Coin_Set (self, conf, Bybit):
         for i in ((conf.get_value(parameter1="exchange",parameter2="Coins"))):  # створюємо масив монет та заповнюємо його даними з конфігураційного файлу
             obj = Coin(conf, i, Bybit)                                          # Створення об'єкта з переданими значеннями
-            self.coins[i] = obj            
+            self.coins[i] = obj
