@@ -79,35 +79,38 @@ class TeleGramLogBot:
         else:
             await update.message.reply_text(self.stop_massage_enother_time)
 
-    async def SEND_messager_to_all(self, message="hello!)"): # Надсилання повідомлень
+    async def SEND_messager_to_all(self, message="hello!)"):
         for user_id in self.user_ids:
             try:
                 await self.bot.send_message(chat_id=user_id, text=message)
-                # failed(f"Повідомлення надіслано користувачу {user_id}")
+
             except Exception as e:
                 failed(f"Error sending message to user {user_id}: {e}")
-                # Try_All_Clean (message)
 
-    def SEND_TG(self, test = "TEST..."):
-        self._load_user_ids()
-        asyncio.run(self.SEND_messager_to_all(test))
+    def SEND_TG(self, text="TEST..."):
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            asyncio.ensure_future(self.SEND_messager_to_all(text))
+        else:
+            loop.run_until_complete(self.SEND_messager_to_all(text))
 
-    def run(self):          #Запуск бота
+    def _run_polling(self):
+        asyncio.run(self.application.run_polling())
+
+
+    def run(self):
         inform("Starting Bot...")
-        self.process = Process(target=self.application.run_polling)
+        self.process = Process(target=self._run_polling)
         self.process.start()
         success("Bot started!")
-    def terminate(self):         #зупинка бота
+    def terminate(self):
         inform("Stopping Bot...")
         self.process.terminate()
         success("Bot stopped!")
-# Використання класу:
-
 
 
 def TG_LOG(text):
     with open('TRANSFER', 'a') as file:
-        # Додаємо дані до файлу
         file.write(text + "\n")
 
 def TG_LOG_ORDER(side, prise, takeProfit, stopLoss, symbol, qty, leverage):
@@ -156,25 +159,16 @@ def TG_LOG_ORDER(side, prise, takeProfit, stopLoss, symbol, qty, leverage):
     else:               TG_LOG(SHORT)
 
 
-
 def START_TELE_BOT():
     filename = 'TRANSFER'
     old_content = ""
     bot = TeleGramLogBot(True)
     while 1:
-
-        # Перевірка існування файлу
-        
         if os.path.exists(filename):
-            # Якщо файл існує, зчитуємо його вміст
             with open(filename, 'r') as file:
                 content = file.read()
             if (old_content != content):
-                bot.terminate()
-                del bot
-                bot = TeleGramLogBot(True)
                 bot.SEND_TG(content)
-                print("Content:\n", content)
                 os.remove(filename)
             old_content = content
         sleep (1)
@@ -184,34 +178,6 @@ def BOT_LAUNCHER():
         pp = Process(target=START_TELE_BOT)
         pp.start()
         pp.join()
-    # Бот запускається і працює у фоновому режимі
-    # bot.run()
 
-    # Приклад виклику методу відправки повідомлення всім підписникам
-    # for i in range (0, 100):
-    #     bot.SEND_TG(f"TESTING for => {i}")
-    # bot.SEND_TG(f"GOOOOOOD)")
-    # bot.terminate()
-
-
-
-# from multiprocessing import Process
-# from time import sleep
-# # Функція, яку будемо запускати в окремому процесі
-# def my_function():
-#     print("Процес виконується!")
-#     sleep(30)
-#     print("Процес завершився!")
-
-# # Створення нового процесу
-# process = Process(target=my_function)
-
-# # Запуск процесу
-# process.start()
-
-# # Очікування завершення процесу
-# # process.join()
-# sleep(5)
-# process.terminate()
-# print("Процес")
-
+if __name__ == "__main__":
+    BOT_LAUNCHER()
