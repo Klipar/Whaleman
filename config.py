@@ -19,7 +19,7 @@ class Config:
             failed(f"Dont got config file as argument...")
             self.create_config()
 
-    def Refresh (self, TG_LOG):
+    def RefreshConfig (self, TG_LOG):
         t = self.config_red (sys.argv[1])
         if (t != self.config):
             TG_LOG(warn("Config was changed! Reloading nesesery compounents. . ."))
