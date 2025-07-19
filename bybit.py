@@ -2,11 +2,11 @@
 # from time import sleep
 
 
-from easy.massage import failed, success, inform, warn, test, pr
+from easy.message import failed, success, inform, warn, test, pr
 from pybit.unified_trading import WebSocket
 from pybit.unified_trading import HTTP
 from time import sleep
-from easy.animations import LineProgresBar, SimpleAnimation
+from easy.animations import LineProgressBar, SimpleAnimation
 import aiohttp
 import asyncio
 from telegram_info_bot import TG_LOG, TG_LOG_ORDER
@@ -165,7 +165,7 @@ class Bybit:
         inform (f"Subskribing....")
         coins = conf.get_value(parameter1="exchange",parameter2="Coins")
 
-        bar = LineProgresBar(MaxLength = 50, text = "Loading ", maxWalue = len(coins), isShowPersent = True, isShowWalue = True)
+        bar = LineProgressBar(MaxLength = 50, text = "Loading ", maxValue = len(coins), isShowPercent = True, isShowValue = True)
 
         self.ws = WebSocket(
             testnet=False,

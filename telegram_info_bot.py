@@ -4,7 +4,7 @@ from telegram import Bot
 from multiprocessing import Process
 import asyncio
 import os
-from easy.massage import failed, success, inform, warn, test
+from easy.message import failed, success, inform, warn, test
 
 
 from time import sleep
@@ -22,12 +22,12 @@ class TeleGramLogBot:
         self.bot = Bot(token=self.TOKEN)
         self.process = None
 
-        self.start_massage = "You are successfully subscribed to receive messages from the bot."
-        self.stop_massage  = "You have successfully unsubscribed from receiving messages from the bot."
-        self.info_massage  = "BOT V = 2.0.0"
-        self.help_massage  = "Available commands:\n/start —> subscribe to receive messages.\n/stop —> unsubscribe from receiving messages.\n/info —> get information about the bot.\n/help —> display this message."
-        self.start_massage_enother_time = "You are already subscribed."
-        self.stop_massage_enother_time  = "You are already unsubscribed."
+        self.start_message = "You are successfully subscribed to receive messages from the bot."
+        self.stop_message  = "You have successfully unsubscribed from receiving messages from the bot."
+        self.info_message  = "BOT V = 2.0.0"
+        self.help_message  = "Available commands:\n/start —> subscribe to receive messages.\n/stop —> unsubscribe from receiving messages.\n/info —> get information about the bot.\n/help —> display this message."
+        self.start_message_enother_time = "You are already subscribed."
+        self.stop_message_enother_time  = "You are already unsubscribed."
         success("Bot initialized successfully")
         if autostart:
             self.run()
@@ -60,24 +60,24 @@ class TeleGramLogBot:
         if user_id not in self.user_ids:
             self.user_ids.add(user_id)  # Додаємо користувача до списку
             self._save_user_ids()  # Записуємо у файл
-            await update.message.reply_text(self.start_massage)
+            await update.message.reply_text(self.start_message)
         else:
-            await update.message.reply_text(self.start_massage_enother_time)
+            await update.message.reply_text(self.start_message_enother_time)
 
     async def info(self, update: Update, context: CallbackContext) -> None: #Обробляє команду /start.
-        await update.message.reply_text(self.info_massage)
+        await update.message.reply_text(self.info_message)
 
     async def help(self, update: Update, context: CallbackContext) -> None: #Обробляє команду /start.
-        await update.message.reply_text(self.help_massage)
+        await update.message.reply_text(self.help_message)
 
     async def stop(self, update: Update, context: CallbackContext) -> None: #Обробляє команду /stop
         user_id = update.message.chat_id
         if user_id in self.user_ids:
             self.user_ids.remove(user_id)  # Видаляємо користувача зі списку
             self._save_user_ids()  # Оновлюємо файл
-            await update.message.reply_text(self.stop_massage)
+            await update.message.reply_text(self.stop_message)
         else:
-            await update.message.reply_text(self.stop_massage_enother_time)
+            await update.message.reply_text(self.stop_message_enother_time)
 
     async def SEND_messager_to_all(self, message="hello!)"):
         for user_id in self.user_ids:

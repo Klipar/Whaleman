@@ -2,7 +2,7 @@ from config import Config
 from coin import CoinHab
 from bybit import Bybit
 from telegram_info_bot import BOT_LAUNCHER, TG_LOG
-from easy.massage import *
+from easy.message import *
 from multiprocessing import Process
 
 def main ():

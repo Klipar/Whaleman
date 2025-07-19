@@ -1,4 +1,4 @@
-from easy.massage import failed, success, inform, warn, test
+from easy.message import failed, success, inform, warn, test
 from defoult_config import default_config
 import json
 import sys
@@ -38,12 +38,12 @@ class Config:
             inform("The creation of the configuration file has been canceled.")
         sys.exit(0)
 
-    def check_and_create_dir(self, dir_path):   # Пере і створює в разі чого вказану директорію 
+    def check_and_create_dir(self, dir_path):   # Пере і створює в разі чого вказану директорію
         if not os.path.exists(dir_path):
             try:
                 os.makedirs(dir_path)
             except Exception as err:
-                failed(f"Cant create {dir_path} directiry: {err}")            
+                failed(f"Cant create {dir_path} directiry: {err}")
             inform(f"Directory '{dir_path}' created succesfuly.")
 
     def config_red (self, config_path):

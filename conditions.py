@@ -1,4 +1,4 @@
-from easy.massage import failed, success, inform, warn, test, pr
+from easy.message import failed, success, inform, warn, test, pr
 
 def Checking_turnover (conf, Bybit, data, coin):     # перевірка на наявність достатньо високих обємів торгів. Потім додати коофіцієнт часу.
     average = float(calculate_average(data))

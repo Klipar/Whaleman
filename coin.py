@@ -1,4 +1,4 @@
-from easy.massage import failed, success, inform, warn, test, pr
+from easy.message import failed, success, inform, warn, test, pr
 import asyncio
 import aiohttp
 from conditions import CONDITION
