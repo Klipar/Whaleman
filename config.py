@@ -13,7 +13,7 @@ class Config:
         if (len(sys.argv) > 1):
             self.config = self.config_red (sys.argv[1])
             if (Version != self.get_value(parameter1="Version of config")):
-                failed (f"VERSION IS INCORECT. Expected = {Version}, bat got {self.get_value(parameter1="Version of config")}")
+                failed (f"VERSION IS INCORRECT. Expected = {Version}, bat got {self.get_value(parameter1="Version of config")}")
                 self.create_config()
         else:
             failed(f"Dont got config file as argument...")

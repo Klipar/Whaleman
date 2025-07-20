@@ -9,7 +9,7 @@ from time import sleep
 from easy.animations import LineProgressBar, SimpleAnimation
 import aiohttp
 import asyncio
-from telegram_info_bot import TG_LOG, TG_LOG_ORDER
+from telegram_info_bot import logTG, logOrderTG
 
 
 class Bybit:
@@ -116,7 +116,7 @@ class Bybit:
             ))
             # TG_LOG(f"--> {side} {symbol}")
             self.Refresh_Positions()
-            TG_LOG_ORDER(side = side, prise = prise, takeProfit = takeProfit, stopLoss = stopLoss, symbol = symbol, qty = qty, leverage = self.leverage)
+            logOrderTG(side = side, prise = prise, takeProfit = takeProfit, stopLoss = stopLoss, symbol = symbol, qty = qty, leverage = self.leverage)
 
             # self.bot.SEND_TG(warn(f"--> {side} {symbol}"))
             # pr ("GOOOOD")
