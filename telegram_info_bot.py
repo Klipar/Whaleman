@@ -4,6 +4,7 @@ from telegram import Bot
 from typing import Any, Dict, List
 import asyncio
 from easy import Config, Logger
+from positionMessageSynthesizer import PositionMessageSynthesizer
 from telegramUsersDatabase import TelegramUsersDatabase
 
 class TeleGramLogBot:
@@ -22,7 +23,8 @@ class TeleGramLogBot:
         )
         self._setupHandlers()
         self.bot = Bot(token=self.config.getValue("Telegram API token"))
-        self.process = None
+
+        self.positionMessageSynthesizer = PositionMessageSynthesizer(config=config,logger=logger)
 
         self.logger.success("Telegram bot initialized successfully")
 
@@ -35,9 +37,14 @@ class TeleGramLogBot:
             async def sendMassageToAdmins(data: Dict[str, Any]):
                 await self.sendMessageToAll(data["message"], self.database.getTelegramIDForAllSubscribedAdmins())
 
+            async def sendPlacingOrder(data: Dict[str, Any]):
+                await self.sendMessageToAll(self.positionMessageSynthesizer.getSynthesizerOrderMessage(data),
+                                            self.database.getTelegramIDForAllSubscribedUsers())
+
             actionsHolder = {
                 "Send to all" : sendMassageToAll,
-                "Send to admins" : sendMassageToAdmins
+                "Send to admins" : sendMassageToAdmins,
+                "Place order" : sendPlacingOrder
             }
 
             self.socketServer = SocketServer(config=self.config,
@@ -88,7 +95,7 @@ class TeleGramLogBot:
         try:
             await self.bot.send_message(chat_id=user_id, text=message)
         except Exception as e:
-            self.logger.warning(f"Failed to send message to: {user_id}: {e}")
+            self.logger.warn(f"Failed to send message to: {user_id}: {e}")
 
     async def sendMessageToAll(self, message: str, users: List[int], maxConcurrent=10):
         sem = asyncio.Semaphore(maxConcurrent)
