@@ -1,35 +1,21 @@
-from config import Config
+from easy import Config
 from coin import CoinHab
 from bybit import Bybit
-from telegram_info_bot import BOT_LAUNCHER, logTG
 from easy.message import *
-from multiprocessing import Process
 
 def main ():
-    conf = Config(Version = "2.0")          # Reading the configuration for exchange
+    config = Config("Configs/work.json")
 
-    bybit = Bybit(conf)                     # Creating an exchange object.
+    bybit = Bybit(config)
 
-    coin_hab = CoinHab(conf, bybit)
-    coin_hab.Initialize_Coins(conf, bybit)
+    coin_hab = CoinHab(config, bybit)
+    coin_hab.Initialize_Coins(config, bybit)
 
-    bybit.Subscribe(conf, coin_hab)
+    bybit.Subscribe(config, coin_hab)
 
-    logTG(success("Bot started successfully!"))
-    while 1:
+    while True:
         bybit.Refresh_Positions()
-        conf.RefreshConfig(logTG)
-
-def launcher():
-    logTG(inform("Starting..."))
-    Telebot_Process = Process(target=BOT_LAUNCHER)
-    Telebot_Process.start()
-    while (1):
-        process = Process(target=main)
-        process.start()
-        process.join()
-        logTG(failed("Bot stoped :("))
-        logTG(inform("Restarting..."))
+        config.refreshConfig()
 
 if __name__ == "__main__":
-    launcher()
+    main()

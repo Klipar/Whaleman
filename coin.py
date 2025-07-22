@@ -7,7 +7,7 @@ from easy.animations import *
 
 class Coin:
     def __init__(self, conf, coin, Bybit):
-        self.Limit_of_Candels = conf.get_value(parameter1="exchange",parameter2="Treyd", parameter3="Max count of cendals for awereg a treyd wolume")
+        self.Limit_of_Candels = conf.getValue("exchange", "Treyd", "Max count of cendals for awereg a treyd wolume")
         self.Coin = coin
 
         self.Bybit = Bybit
@@ -107,7 +107,7 @@ class CoinHab:
     def SetRounds(self, conf ,Bybit):
         response = Bybit.Get_Instruments_Info()
         for i in response["result"]["list"]:
-            for j in ((conf.get_value(parameter1="exchange",parameter2="Coins"))):
+            for j in ((conf.getValue("exchange", "Coins"))):
                 if (i["symbol"] == j):
                     self.coins[j].Set_Round(i)
 
@@ -123,7 +123,7 @@ class CoinHab:
         # coin.Process_Values(message)
 
     def Initialize_Coins (self, conf, Bybit):
-        result = asyncio.run(Bybit.Get_Cline_For_all(conf.get_value(parameter1="exchange",parameter2="Coins"), conf.get_value(parameter1="exchange",parameter2="Treyd", parameter3="Max count of cendals for awereg a treyd wolume")))
+        result = asyncio.run(Bybit.Get_Cline_For_all(conf.getValue("exchange", "Coins"), conf.getValue("exchange", "Treyd", "Max count of cendals for awereg a treyd wolume")))
 
         for i in range (len(self.coins)):
             if (int(result[i]['retCode']) == 0):
@@ -132,6 +132,6 @@ class CoinHab:
                 failed (result[i])
 
     def Coin_Set (self, conf, Bybit):
-        for i in ((conf.get_value(parameter1="exchange",parameter2="Coins"))):  # створюємо масив монет та заповнюємо його даними з конфігураційного файлу
+        for i in ((conf.getValue("exchange", "Coins"))):  # створюємо масив монет та заповнюємо його даними з конфігураційного файлу
             obj = Coin(conf, i, Bybit)                                          # Створення об'єкта з переданими значеннями
             self.coins[i] = obj

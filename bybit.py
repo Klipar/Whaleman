@@ -9,18 +9,17 @@ from time import sleep
 from easy.animations import LineProgressBar, SimpleAnimation
 import aiohttp
 import asyncio
-from telegram_info_bot import logTG, logOrderTG
 
 
 class Bybit:
-    def __init__(self, conf):
+    def __init__(self, config):
 
-        self.publicKey = conf.get_value(parameter1="exchange",parameter2="Bybit", parameter3="API Pyblic Key")
-        self.sycretKey = conf.get_value(parameter1="exchange",parameter2="Bybit", parameter3="API Secret Key")
-        self.No_Treyde = conf.get_value(parameter1="exchange",parameter2="Treyd", parameter3="No Treyd")
-        self.Category  = conf.get_value(parameter1="exchange",parameter2="Bybit", parameter3="Categoria of treyding")
-        self.Candel_time = conf.get_value(parameter1="exchange",parameter2="Treyd", parameter3="Cendel time")
-        self.SettleCoin = conf.get_value(parameter1="exchange",parameter2="Bybit", parameter3="SettleCoin")
+        self.publicKey = config.getValue("exchange", "Bybit", "API Pyblic Key")
+        self.sycretKey = config.getValue("exchange", "Bybit", "API Secret Key")
+        self.No_Treyde = config.getValue("exchange", "Treyd", "No Treyd")
+        self.Category  = config.getValue("exchange", "Bybit", "Categoria of treyding")
+        self.Candel_time = config.getValue("exchange", "Treyd", "Cendel time")
+        self.SettleCoin = config.getValue("exchange", "Bybit", "SettleCoin")
         self.ws = None
         self.session = HTTP(
             testnet=False,
@@ -28,17 +27,17 @@ class Bybit:
             api_secret=self.sycretKey,
         )
         self.Positions = self.Refresh_Positions ()
-        self.Sliding_Persend = float(conf.get_value(parameter1="exchange",parameter2="Treyd", parameter3="Sliding persent from entering prise"))
-        self.TakeProfitPersent = float(conf.get_value(parameter1="exchange",parameter2="Treyd", parameter3="Take profit percent from entering prise"))
-        self.StopLoss_Persent  = float(conf.get_value(parameter1="exchange",parameter2="Treyd", parameter3="Stop lose percent from entering prise"))
-        self.Balanse = float(conf.get_value(parameter1="exchange",parameter2="Treyd", parameter3="Max Treyding Balance in USDT"))
-        self.Position_Multiplayer = float(conf.get_value(parameter1="exchange",parameter2="Treyd", parameter3="Multiplier to increase the deal value"))
-        self.Max_Position_Value = float(self.Get_Max_Position_Value(conf))
-        self.Next_Persent_step = float(conf.get_value(parameter1="exchange",parameter2="Treyd", parameter3="Next steps prise in percent moowing from last order prise"))
+        self.Sliding_Persend = float(config.getValue("exchange", "Treyd", "Sliding persent from entering prise"))
+        self.TakeProfitPersent = float(config.getValue("exchange", "Treyd", "Take profit percent from entering prise"))
+        self.StopLoss_Persent  = float(config.getValue("exchange", "Treyd", "Stop lose percent from entering prise"))
+        self.Balanse = float(config.getValue("exchange", "Treyd", "Max Treyding Balance in USDT"))
+        self.Position_Multiplayer = float(config.getValue("exchange", "Treyd", "Multiplier to increase the deal value"))
+        self.Max_Position_Value = float(self.Get_Max_Position_Value(config))
+        self.Next_Persent_step = float(config.getValue("exchange", "Treyd", "Next steps prise in percent moowing from last order prise"))
 
-        self.FirstStepPersent = float(conf.get_value(parameter1="exchange",parameter2="Treyd", parameter3="First step in persent from treyding balance"))
-        self.leverage = float(conf.get_value(parameter1="exchange",parameter2="Treyd", parameter3="leverage"))
-        self.MaxOrderPerCoin = int(conf.get_value(parameter1="exchange",parameter2="Treyd", parameter3="Max orders per coin"))
+        self.FirstStepPersent = float(config.getValue("exchange", "Treyd", "First step in persent from treyding balance"))
+        self.leverage = float(config.getValue("exchange", "Treyd", "leverage"))
+        self.MaxOrderPerCoin = int(config.getValue("exchange", "Treyd", "Max orders per coin"))
     def Try_Plase_Order (self, coin, side):
         # pr ("Try_Plase_Order")
         # test(coin.Get_Last_Prise())
@@ -163,7 +162,7 @@ class Bybit:
 
     def Subscribe (self, conf, coin_hab):
         inform (f"Subskribing....")
-        coins = conf.get_value(parameter1="exchange",parameter2="Coins")
+        coins = conf.getValue("exchange", "Coins")
 
         bar = LineProgressBar(MaxLength = 50, text = "Loading ", maxValue = len(coins), isShowPercent = True, isShowValue = True)
 
@@ -224,7 +223,7 @@ class Bybit:
 
     def Get_Max_Position_Value (self, conf):
         self.Balanse
-        Max_Position_Persent = float(conf.get_value(parameter1="exchange",parameter2="Treyd", parameter3="Max position persent from balance"))
+        Max_Position_Persent = float(conf.getValue("exchange", "Treyd", "Max position persent from balance"))
         return ((self.Balanse/100)*Max_Position_Persent)
 
 
