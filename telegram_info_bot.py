@@ -1,36 +1,51 @@
-from telegram.ext import Application, CommandHandler, CallbackContext
+from telegram.ext import CommandHandler, CallbackContext, ApplicationBuilder
 from telegram import Update
 from telegram import Bot
-from multiprocessing import Process
+from typing import Any, Dict, List
 import asyncio
-import os
-from easy.message import *
-
-
-from time import sleep
+from easy import Config, Logger
+from telegramUsersDatabase import TelegramUsersDatabase
 
 class TeleGramLogBot:
-    def __init__(self, autostart = False):
-        inform ("Initializing the bot...")
-        self.TelegramAPIToken = '7173552290:AAECYbttByqVWlGaUsmjTc0Ur7wXCFB9rLk'
-        self.filePath = "user_ids.txt"
+    def __init__(self, config: Config, database: TelegramUsersDatabase, logger: Logger = Logger()):
+        self.logger = logger
+        self.config = config
+        self.database = database
 
-        self.userIds = set()
-        self.application = Application.builder().token(self.TelegramAPIToken).build()
+        self.logger.inform ("Initializing Telegram Logging bot...")
+
+        self.application = (
+            ApplicationBuilder()
+            .token(self.config.getValue("Telegram API token"))
+            .post_init(self.onStartup)
+            .build()
+        )
         self._setupHandlers()
-        self._loadUserIds()
-        self.bot = Bot(token=self.TelegramAPIToken)
+        self.bot = Bot(token=self.config.getValue("Telegram API token"))
         self.process = None
 
-        self.startMessage = "You are successfully subscribed to receive messages from the bot."
-        self.stopMessage  = "You have successfully unsubscribed from receiving messages from the bot."
-        self.infoMessage  = "BOT V = 2.0.0"
-        self.helpMessage  = "Available commands:\n/start —> subscribe to receive messages.\n/stop —> unsubscribe from receiving messages.\n/info —> get information about the bot.\n/help —> display this message."
-        self.startMessageAnotherTime = "You are already subscribed."
-        self.stopMessageAnotherTime  = "You are already unsubscribed."
-        success("Bot initialized successfully")
-        if autostart:
-            self.run()
+        self.logger.success("Telegram bot initialized successfully")
+
+    async def onStartup(self, app):
+            from socketServer import SocketServer
+
+            async def sendMassageToAll(data: Dict[str, Any]):
+                await self.sendMessageToAll(data["message"], self.database.getTelegramIDForAllSubscribedUsers())
+
+            async def sendMassageToAdmins(data: Dict[str, Any]):
+                await self.sendMessageToAll(data["message"], self.database.getTelegramIDForAllSubscribedAdmins())
+
+            actionsHolder = {
+                "Send to all" : sendMassageToAll,
+                "Send to admins" : sendMassageToAdmins
+            }
+
+            self.socketServer = SocketServer(config=self.config,
+                                             actionsHolder=actionsHolder,
+                                             logger=self.logger)
+
+
+            asyncio.create_task(self.socketServer.start())
 
     def _setupHandlers(self):
         self.application.add_handler(CommandHandler("start", self.start))
@@ -38,140 +53,66 @@ class TeleGramLogBot:
         self.application.add_handler(CommandHandler("info", self.info))
         self.application.add_handler(CommandHandler("help", self.help))
 
-    def _loadUserIds(self):
-        if os.path.exists(self.filePath):
-            try:
-                with open(self.filePath, "r") as file:
-                    self.userIds = set()
-                    for line in file:
-                        userId = line.strip()
-                        if userId.isdigit():
-                            self.userIds.add(int(userId))
-            except Exception as e:
-                failed(f"Failed to load user database... ERROR: {e}")
-
-    def _saveUserIds(self):
-        with open(self.filePath, "w") as file:
-            for userId in self.userIds:
-                file.write(f"{userId}\n")
-
     async def start(self, update: Update, context: CallbackContext) -> None:
-        userId = update.message.chat_id
-        if userId not in self.userIds:
-            self.userIds.add(userId)
-            self._saveUserIds()
-            await update.message.reply_text(self.startMessage)
+        TelegramID = update.message.chat_id
+        user = self.database.getUser(TelegramID)
+        if user is not None and user[1] == 1:
+            await update.message.reply_text(self.config.getValue("Commands", "start", "already"))
         else:
-            await update.message.reply_text(self.startMessageAnotherTime)
+            if user is None:
+                self.database.addOrUpdateUser(TelegramID=TelegramID, subscribed=1, sudo=0)
+            else:
+                self.database.addOrUpdateUser(TelegramID=TelegramID, subscribed=1, sudo=user[2])
+            await update.message.reply_text(self.config.getValue("Commands", "start", "success"))
 
     async def info(self, update: Update, context: CallbackContext) -> None:
-        await update.message.reply_text(self.infoMessage)
+        await update.message.reply_text(self.config.getValue("Commands", "info", "success"))
 
     async def help(self, update: Update, context: CallbackContext) -> None:
-        await update.message.reply_text(self.helpMessage)
+        await update.message.reply_text(self.config.getValue("Commands", "help", "success"))
 
     async def stop(self, update: Update, context: CallbackContext) -> None:
-        userId = update.message.chat_id
-        if userId in self.userIds:
-            self.userIds.remove(userId)
-            self._saveUserIds()
-            await update.message.reply_text(self.stopMessage)
+        TelegramID = update.message.chat_id
+        user = self.database.getUser(TelegramID)
+        if user is not None and user[1] == 1:
+            self.database.addOrUpdateUser(TelegramID=TelegramID, subscribed=0, sudo=user[2])
+            await update.message.reply_text(self.config.getValue("Commands", "stop", "success"))
         else:
-            await update.message.reply_text(self.stopMessageAnotherTime)
+            if user is not None:
+                await update.message.reply_text(self.config.getValue("Commands", "stop", "already"))
+            else:
+                self.database.addOrUpdateUser(TelegramID=TelegramID, subscribed=0, sudo=0)
+                await update.message.reply_text(self.config.getValue("Commands", "stop", "never"))
 
-    async def sendMessageToAll(self, message="hello!)"):
-        for userId in self.userIds:
-            try:
-                await self.bot.send_message(chat_id=userId, text=message)
+    async def sendToUser(self, user_id: int, message: str):
+        try:
+            await self.bot.send_message(chat_id=user_id, text=message)
+        except Exception as e:
+            self.logger.warning(f"Failed to send message to: {user_id}: {e}")
 
-            except Exception as e:
-                failed(f"Error sending message to user {userId}: {e}")
+    async def sendMessageToAll(self, message: str, users: List[int], maxConcurrent=10):
+        sem = asyncio.Semaphore(maxConcurrent)
 
-    def sendTG(self, text="TEST..."):
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            asyncio.ensure_future(self.sendMessageToAll(text))
-        else:
-            loop.run_until_complete(self.sendMessageToAll(text))
+        async def semTask(user_id):
+            async with sem:
+                await self.sendToUser(user_id, message)
 
-    def _runPolling(self):
-        asyncio.run(self.application.run_polling())
+        await asyncio.gather(*(semTask(uid) for uid in users))
 
     def run(self):
-        inform("Starting Bot...")
-        self.process = Process(target=self._runPolling)
-        self.process.start()
-        success("Bot started!")
-
-    def terminate(self):
-        inform("Stopping Bot...")
-        self.process.terminate()
-        success("Bot stopped!")
+            self.application.run_polling()
 
 
-def logTG(text):
-    with open('TRANSFER', 'a') as file:
-        file.write(text + "\n")
+def startTelegramBot():
+    config = Config(configPath="Configs/telegramBot.json",
+                    logger=Logger(2),
+                    onFailedToLoadConfig=lambda: exit(0))
 
-def logOrderTG(side, prise, takeProfit, stopLoss, symbol, qty, leverage):
-    Value = round((qty*prise), 2)
-    profit = (round((((abs((takeProfit*qty)-(prise*qty))))*leverage), 2))
-    loss  = (round((((abs((stopLoss*qty)-(prise*qty)))*-1)*leverage), 2))
-    LONG = f'''
-    ❗️❗️❗️️  PLACING ORDER  ❗️❗️❗️
-    ============================
-                    🟢 LONG 🟢
-            Symbol:     {symbol}
-            Side:           Buy
-            Triggering prise = {prise}
-            Take profit        = {takeProfit}
-            Stop lose          = {stopLoss}
-    -----------------------------------------------------
-            Qty                      = {qty}
-            Value in USDT  = {Value}
-            Order type          = Limit
-            Trade fee           = ?
-    -----------------------------------------------------
-                Expected profit      = {profit}
-                Expected losses    = {loss}
-    ============================
-    '''
-    SHORT = f'''
-    ❗️❗️❗️️  PLACING ORDER  ❗️❗️❗️
-    ============================
-                        🔴 Short 🔴
-                Symbol:     {symbol}
-                Side:           Sell
-                Triggering prise = {prise}
-                Take profit        = {takeProfit}
-                Stop lose          = {stopLoss}
-    -----------------------------------------------------
-                Qty                      = {qty}
-                Value in USDT  = {Value}
-                Order type          = Limit
-                Trade fee           = ?
-    -----------------------------------------------------
-                Expected profit      = {profit}
-                Expected losses    = {loss}
-    ============================
-    '''
-    if (side == "Buy"): logTG(LONG)
-    else:               logTG(SHORT)
+    bot = TeleGramLogBot(config = config,
+                         database =TelegramUsersDatabase(config),
+                         logger=Logger())
 
-
-def startTGBot():
-    filename = 'TRANSFER'
-    oldContent = ""
-    bot = TeleGramLogBot(True)
-    while 1:
-        if os.path.exists(filename):
-            with open(filename, 'r') as file:
-                content = file.read()
-            if (oldContent != content):
-                bot.sendTG(content)
-                os.remove(filename)
-            oldContent = content
-        sleep(1)
+    bot.run()
 
 if __name__ == "__main__":
-    startTGBot()
+    startTelegramBot()
