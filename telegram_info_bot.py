@@ -51,7 +51,6 @@ class TeleGramLogBot:
                                              actionsHolder=actionsHolder,
                                              logger=self.logger)
 
-
             asyncio.create_task(self.socketServer.start())
 
     def _setupHandlers(self):

@@ -3,10 +3,9 @@ import json
 from easy import Logger, Config
 from typing import Callable, Dict, Any
 
-
 class SocketServer:
     def __init__(self, config: Config,
-                 actionsHolder: Dict[str, Any],
+                 actionsHolder: Dict[str, Callable],
                  logger=Logger()):
         self.config = config
         self.logger = logger
