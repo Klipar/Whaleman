@@ -27,3 +27,9 @@ class FIFOQueue:
     def size(self) -> int:
         """Get the number of items in the queue."""
         return len(self.queue)
+
+    def latest(self) -> Any:
+            """Get the most recently added item in the queue."""
+            if self.isEmpty():
+                return None
+            return self.queue[-1]
