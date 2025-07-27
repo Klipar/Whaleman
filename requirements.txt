@@ -5,7 +5,7 @@ anyio==4.4.0
 attrs==24.2.0
 certifi==2024.7.4
 charset-normalizer==3.3.2
-easy @ git+https://github.com/Klipar/easy.git@2fd2d2b6d080a25a8327f7a080b17b23ff08a1e4
+easy @ git+https://github.com/Klipar/easy.git@929885e09c67b52975199c3e08262704f5bc60ec
 frozenlist==1.4.1
 h11==0.14.0
 httpcore==1.0.5

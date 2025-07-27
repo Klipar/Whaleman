@@ -19,7 +19,7 @@ class CoinHab:
         inform (f"Founded {len(self.coins)} Coins")
 
     def setRounding(self, conf, bybit: Bybit):
-        response = bybit.Get_Instruments_Info()
+        response = bybit.getInstrumentsInfo()
         for i in response["result"]["list"]:
             for j in ((conf.getValue("exchange", "Coins"))):
                 if (i["symbol"] == j):
@@ -29,8 +29,8 @@ class CoinHab:
         inform(self.animation.step(), en="\r")
         self.coins[message['topic'].replace(self.trashText, "")].processValues(message)
 
-    def initializeCoins (self, conf: Config, bybit: Bybit):
-        result = asyncio.run(bybit.Get_Cline_For_all(conf.getValue("exchange", "Coins"), conf.getValue("exchange", "Trade", "Max count of candles for average a trade volume")))
+    async def initializeCoins (self, bybit: Bybit):
+        result = await bybit.getClineForAll()
 
         for i in range (len(self.coins)):
             if (int(result[i]['retCode']) == 0):

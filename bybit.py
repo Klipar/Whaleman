@@ -2,18 +2,22 @@ from easy.message import *
 from easy import Config
 from pybit.unified_trading import WebSocket
 from pybit.unified_trading import HTTP
-from easy.animations import LineProgressBar, SimpleAnimation
-import aiohttp
+from easy.animations import LineProgressBar
+# from coinHab import CoinHab
 import asyncio
 
 
 class Bybit:
     def __init__(self, config: Config):
+        self.config: Config = config
+
+        self.webSocket = WebSocket(testnet=self.config.getValue("exchange", "Bybit", "Testnet"),
+                                   channel_type=self.config.getValue("exchange", "Bybit", "Category of trading"))
+
         self.No_Tradee = config.getValue("exchange", "Trade", "No Trade")
-        self.Category  = config.getValue("exchange", "Bybit", "Categoria of treyding")
+        self.Category  = config.getValue("exchange", "Bybit", "Category of trading")
         self.Candel_time = config.getValue("exchange", "Trade", "Candle time")
         self.SettleCoin = config.getValue("exchange", "Bybit", "SettleCoin")
-        self.ws = None
         self.session = HTTP(
             testnet=config.getValue("exchange", "Bybit", "Testnet"),
             api_key=config.getValue("exchange", "Bybit", "API Public Key"),
@@ -23,9 +27,9 @@ class Bybit:
         self.Sliding_Persend = float(config.getValue("exchange", "Trade", "Sliding persent from entering prise"))
         self.TakeProfitPersent = float(config.getValue("exchange", "Trade", "Take profit percent from entering prise"))
         self.StopLoss_Persent  = float(config.getValue("exchange", "Trade", "Stop lose percent from entering prise"))
-        self.Balanse = float(config.getValue("exchange", "Trade", "Max Tradeing Balance in USDT"))
+        self.Balance = float(config.getValue("exchange", "Trade", "Max Tradeing Balance in USDT"))
         self.Position_Multiplayer = float(config.getValue("exchange", "Trade", "Multiplier to increase the deal value"))
-        self.Max_Position_Value = float(self.Get_Max_Position_Value(config))
+        self.Max_Position_Value = float(self.getMaxPositionValue(config))
         self.Next_Persent_step = float(config.getValue("exchange", "Trade", "Next steps prise in percent moowing from last order prise"))
 
         self.FirstStepPersent = float(config.getValue("exchange", "Trade", "First step in persent from treyding balance"))
@@ -70,7 +74,7 @@ class Bybit:
         # PREPEARING TO PLASE ORDER
         symbol = coin.Get_Coin()
 
-        qty = coin.roundQty((((self.Balanse/100)*self.FirstStepPersent)/coin.getLastPrise())*self.leverage)
+        qty = coin.roundQty((((self.Balance/100)*self.FirstStepPersent)/coin.getLastPrise())*self.leverage)
         if (side == "Buy"):
             prise      = coin.roundPrise(coin.getLastPrise() + ((coin.getLastPrise()/100)*self.Sliding_Persend))
             takeProfit = coin.roundPrise(coin.getLastPrise() + ((coin.getLastPrise()/100)*self.TakeProfitPersent))
@@ -114,62 +118,36 @@ class Bybit:
         except Exception as e:
             failed(f"Failed to place order: {e}")
 
-    async def get_kline(self, symbol, limitOfCandles, session = None):
-        payload = {}
-        headers = {}
+    async def getKline(self, symbol):
+        return self.session.get_kline(category=self.config.getValue("exchange", "Bybit", "Category of trading"),
+                                      symbol=symbol,
+                                      interval=self.config.getValue("exchange", "Trade", "Candle time"),
+                                      limit=self.config.getValue("exchange", "Trade", "Max count of candles for average a trade volume"))
 
-        url = f"https://api.bybit.com/v5/market/kline?category={self.Category}&symbol={symbol}&interval={self.Candel_time}&limit={limitOfCandles}"
+    async def getClineForAll(self):
+        tasks = []
+        for symbol in self.config.getValue("exchange", "Coins"):
+            tasks.append(asyncio.create_task(self.getKline(symbol)))
 
-        async with session.get(url, headers=headers, data=payload) as response:
-            data = await response.json()
-            try:
-                if 'retCode' in data:
-                    if (data['retCode'] != 0):
-                        failed(f"ERROR while geting candels by REST api, Server returned {data['retCode']}.")
-                        return
-                    elif not data['result']['list']:
-                        failed(f"ERROR while geting candels by REST api, Server du not return list of {symbol}.")
-                        return
-                    else:
-                        return data
-                else:
-                    failed(f"ERROR while geting candels by REST api, coin is {symbol}")
-                    return
-            except Exception as e:
-                failed(f"ERROR while geting candels by REST api: {e}")
+        return await asyncio.gather(*tasks)
 
-    async def Get_Cline_For_all(self, symbols, limitOfCandles):
-        # Сесія для повторного використання HTTP-з'єднань
-        async with aiohttp.ClientSession() as session:
-            tasks = []
-            # Перебір символів і створення завдань
-            for symbol in symbols:
-                task = asyncio.create_task(self.get_kline(symbol, limitOfCandles, session))
-                tasks.append(task)
+    async def Subscribe (self, coinHab):
+        inform ("Subscribing...")
 
-            # Виконання всіх завдань
-            results = await asyncio.gather(*tasks)
+        bar = LineProgressBar(MaxLength = 50, text = "Loading ", maxValue = len(self.config.getValue("exchange", "Coins")), isShowPercent = True, isShowValue = True)
+        tasks = []
 
-            return(results)
+        async def subscribeCoin(self, coinHab, coin: str, bar: LineProgressBar):
+            self.webSocket.kline_stream(interval=self.config.getValue("exchange", "Trade", "Candle time"),
+                                 symbol=coin,
+                                 callback=coinHab.handler)
 
-    def Subscribe (self, conf, coin_hab):
-        inform (f"Subskribing....")
-        coins = conf.getValue("exchange", "Coins")
+            bar.shoveAndUpdate(1)
 
-        bar = LineProgressBar(MaxLength = 50, text = "Loading ", maxValue = len(coins), isShowPercent = True, isShowValue = True)
+        for coin in self.config.getValue("exchange", "Coins"):
+            tasks.append(subscribeCoin(self=self,coinHab=coinHab, coin=coin, bar=bar))
 
-        self.ws = WebSocket(
-            testnet=False,
-            channel_type=self.Category,
-        )
-
-        for symbol in coins:
-            self.ws.kline_stream(
-                interval=self.Candel_time,
-                symbol=symbol,
-                callback=coin_hab.handler
-            )
-            bar.ShoveAndUpdate(1)
+        await asyncio.gather(*tasks)
 
     def Refresh_Positions (self):
         response = (self.session.get_positions(
@@ -213,11 +191,9 @@ class Bybit:
             self.Positions = None
             return None
 
-    def Get_Max_Position_Value (self, conf):
-        self.Balanse
-        Max_Position_Persent = float(conf.getValue("exchange", "Trade", "Max position persent from balance"))
-        return ((self.Balanse/100)*Max_Position_Persent)
+    def getMaxPositionValue (self, conf):
+        maxPositionPercent = conf.getValue("exchange", "Trade", "Max position percent from balance")
+        return (self.Balance/100)*maxPositionPercent
 
-
-    def Get_Instruments_Info (self):
-        return (self.session.get_instruments_info(category="linear"))
+    def getInstrumentsInfo(self):
+        return self.session.get_instruments_info(category=self.config.getValue("exchange", "Bybit", "Category of trading"))

@@ -5,7 +5,7 @@ default_config = {
         "Bybit": {
             "API Public Key": "******************",
             "API Secret Key": "************************************",
-            "Categoria of treyding": "linear",
+            "Category of trading": "linear",
             "SettleCoin": "USDT",
             "Testnet" : "False"
         },
@@ -27,7 +27,7 @@ default_config = {
             "Max Count of candle before forse closing order": 60,
 
             "Max orders per coin": 1,
-            "Max position persent from balance": 5,
+            "Max position percent from balance": 5,
 
             "candles minimal move percents": [0.001, 0.1, 0.7, 3.5, 4],
             "Trigger turnover percent": 300,
