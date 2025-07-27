@@ -18,7 +18,7 @@ def checkingTurnover(config: Config, pricesQueueManager: QueueManager):
 
     return 1
 
-def checkingRateOfPriceChange(coin: Coin):
+async def checkingRateOfPriceChange(coin: Coin):
     thresholdPercentages = coin.config.getValue("exchange", "Trade", "candles minimal move percents")
     stampsList = coin.pricesQueueManager.getStampsList()
     latestStamp = coin.pricesQueueManager.getLatest()
@@ -27,20 +27,10 @@ def checkingRateOfPriceChange(coin: Coin):
         different = percentMove(stampsList[-(i+1)].open, latestStamp.close) # TODO: In future can be changed to calculate not from "open" candle prise but from avg or something like that
 
         if different > thresholdPercentages[i]:
-            if coin.config.getValue("exchange", "Trade", "Only Buy"):
-                warn(f"Only Buy, order blocked for {coin.Get_Coin()}")
-                return
-
-            success ("TRY Sell")
-            coin.bybit.requestForPlacingOrder(coin, "Sell")
+            await coin.bybit.requestForPlacingOrder(coin, "Sell")
 
         elif -different > thresholdPercentages[i]:
-            if coin.config.getValue("exchange", "Trade", "Only Sell"):
-                warn(f"Only Sell, order blocked for {coin.Get_Coin()}")
-                return
-
-            success ("TRY BUY")
-            coin.bybit.requestForPlacingOrder(coin, "Buy")
+            await coin.bybit.requestForPlacingOrder(coin, "Buy")
 
 def percentMove(a: float, b: float) -> float:
     """
@@ -61,7 +51,7 @@ def percentMove(a: float, b: float) -> float:
 
     return ((b - a) / a) * 100
 
-def checkOrderConditions(coin: Coin):
+async def checkOrderConditions(coin: Coin):
     if checkingTurnover(config=coin.config, pricesQueueManager=coin.pricesQueueManager): return 0 # Check for sufficient trading volumes
 
-    checkingRateOfPriceChange(coin)
+    await checkingRateOfPriceChange(coin)

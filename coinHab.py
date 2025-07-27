@@ -27,7 +27,8 @@ class CoinHab:
 
     def handler(self, message):
         inform(self.animation.step(), en="\r")
-        self.coins[message['topic'].replace(self.trashText, "")].processValues(message)
+        asyncio.run(self.coins[message['topic'].replace(self.trashText, "")].processValues(message))
+
 
     async def initializeCoins (self, bybit: Bybit):
         result = await bybit.getClineForAll()

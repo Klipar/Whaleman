@@ -3,18 +3,20 @@ from easy import Config
 from pybit.unified_trading import WebSocket
 from pybit.unified_trading import HTTP
 from easy.animations import LineProgressBar
-# from coinHab import CoinHab
 import asyncio
+
+from telegramLogger import TelegramLogger
 
 
 class Bybit:
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, telegramLogger: TelegramLogger):
         self.config: Config = config
+        self.telegramLogger: TelegramLogger = telegramLogger
 
         self.webSocket = WebSocket(testnet=self.config.getValue("exchange", "Bybit", "Testnet"),
                                    channel_type=self.config.getValue("exchange", "Bybit", "Category of trading"))
 
-        self.No_Tradee = config.getValue("exchange", "Trade", "No Trade")
+        self.noTrade = config.getValue("exchange", "Trade", "No Trade")
         self.Category  = config.getValue("exchange", "Bybit", "Category of trading")
         self.Candel_time = config.getValue("exchange", "Trade", "Candle time")
         self.SettleCoin = config.getValue("exchange", "Bybit", "SettleCoin")
@@ -23,7 +25,7 @@ class Bybit:
             api_key=config.getValue("exchange", "Bybit", "API Public Key"),
             api_secret=config.getValue("exchange", "Bybit", "API Secret Key"),
         )
-        self.Positions = self.Refresh_Positions ()
+        self.positions = self.refreshPositions ()
         self.Sliding_Persend = float(config.getValue("exchange", "Trade", "Sliding persent from entering prise"))
         self.TakeProfitPersent = float(config.getValue("exchange", "Trade", "Take profit percent from entering prise"))
         self.StopLoss_Persent  = float(config.getValue("exchange", "Trade", "Stop lose percent from entering prise"))
@@ -36,10 +38,22 @@ class Bybit:
         self.leverage = float(config.getValue("exchange", "Trade", "leverage"))
         self.MaxOrderPerCoin = int(config.getValue("exchange", "Trade", "Max orders per coin"))
 
-    def requestForPlacingOrder (self, coin, side: str):
-        if (self.Positions):
-            for i in self.Positions:
-                if (i['symbol'] == coin.Get_Coin()):
+    async def requestForPlacingOrder (self, coin, side: str):
+        # if coin.config.getValue("exchange", "Trade", "Only Buy"):
+            #     warn(f"Only Buy, order blocked for {coin.Get_Coin()}")
+            #     return
+
+            # success ("TRY Sell")
+
+        # if coin.config.getValue("exchange", "Trade", "Only Sell"):
+            #     warn(f"Only Sell, order blocked for {coin.Get_Coin()}")
+            #     return
+
+            # success ("TRY BUY")
+
+        if (self.positions):
+            for i in self.positions:
+                if (i['symbol'] == coin.coin):
                     move = abs(float(coin.getLastPrise()) - float(i['avgPrice'])) # Реальний здвиг ціни
                     M_move = ((float(i['avgPrice'])/100)*self.Next_Persent_step)    # Максимальний здвиг ціни
                     if (move >= M_move):
@@ -49,7 +63,7 @@ class Bybit:
                             if (self.MaxOrderPerCoin > 1):
                                 # warn (f"All Goood to plase order another time for {side}")
                                 # PREPEARING TO PLASE ORDER
-                                symbol = coin.Get_Coin()
+                                symbol = coin.coin
                                 qty = coin.roundQty((PositionValue_No_Laverage*self.Position_Multiplayer))
                                 if (side == "Buy"):
                                     prise      = coin.roundPrise(coin.getLastPrise() + ((coin.getLastPrise()/100)*self.Sliding_Persend))
@@ -63,7 +77,7 @@ class Bybit:
                                     # success("=======================================================")
                                     # test (f"symbol = {symbol}, qty = {qty}, prise = {prise}, side = {side}, takeProfit = {takeProfit}, stopLoss = {stopLoss}")
                                     # success("=======================================================")
-                                    self.PlaseOrder(symbol = symbol, qty = qty, prise = prise, side = side, takeProfit = takeProfit, stopLoss = stopLoss)
+                                    await self.placeOrder(symbol = symbol, qty = qty, prise = prise, side = side, takeProfit = takeProfit, stopLoss = stopLoss)
                         else:
                             return
                     failed ("Failed to plase order. limit are accesed")
@@ -72,7 +86,7 @@ class Bybit:
 
         # warn (f"All Goood to plase order for {side}")
         # PREPEARING TO PLASE ORDER
-        symbol = coin.Get_Coin()
+        symbol = coin.coin
 
         qty = coin.roundQty((((self.Balance/100)*self.FirstStepPersent)/coin.getLastPrise())*self.leverage)
         if (side == "Buy"):
@@ -83,38 +97,40 @@ class Bybit:
             prise = coin.roundPrise(coin.getLastPrise() - ((coin.getLastPrise()/100)*self.Sliding_Persend))
             takeProfit = coin.roundPrise(coin.getLastPrise() - ((coin.getLastPrise()/100)*self.TakeProfitPersent))
             stopLoss   = coin.roundPrise(coin.getLastPrise() + ((coin.getLastPrise()/100)*self.StopLoss_Persent))
-        # Plasing ORDERRRRR
+
         success("=======================================================")
         test (f"symbol = {symbol}, qty = {qty}, prise = {prise}, side = {side}, takeProfit = {takeProfit}, stopLoss = {stopLoss}")
         success("=======================================================")
-        self.PlaseOrder(symbol = symbol, qty = qty, prise = prise, side = side, takeProfit = takeProfit, stopLoss = stopLoss)
+        await self.placeOrder(symbol = symbol, qty = qty, prise = prise, side = side, takeProfit = takeProfit, stopLoss = stopLoss)
 
-
-    def PlaseOrder(self, symbol, qty, prise, side, takeProfit, stopLoss, order_tipe = "Limit"):
+    async def placeOrder(self, symbol, qty, prise, side, takeProfit, stopLoss, orderType = "Limit"):
         warn(f"--> {side} {symbol}")
 
 
-        if (self.No_Tradee == True):
-            failed (f"skped, no trade = {self.No_Tradee}")
+        if (self.noTrade == True):
+            failed (f"skped, no trade = {self.noTrade}")
             # self.bot.SEND_TG(warn(f"--> {side} {symbol}"))
             return 0
         try:
             success(self.session.place_order(
-                category=self.Category,
-                symbol=symbol,
-                side=side,
-                orderType=order_tipe,
-                qty=qty,
-                price=prise,
-                takeProfit=takeProfit,
-                stopLoss=stopLoss
-            ))
-            # TG_LOG(f"--> {side} {symbol}")
-            self.Refresh_Positions()
-            logOrderTG(side = side, prise = prise, takeProfit = takeProfit, stopLoss = stopLoss, symbol = symbol, qty = qty, leverage = self.leverage)
+                    category=self.Category,
+                    symbol=symbol,
+                    side=side,
+                    orderType=orderType,
+                    qty=qty,
+                    price=prise,
+                    takeProfit=takeProfit,
+                    stopLoss=stopLoss))
 
-            # self.bot.SEND_TG(warn(f"--> {side} {symbol}"))
-            # pr ("GOOOOD")
+            self.refreshPositions()
+            await self.telegramLogger.sendPlacingOrder(side=side,
+                                                       prise=prise,
+                                                       takeProfit=takeProfit,
+                                                       stopLoss=stopLoss,
+                                                       symbol=symbol,
+                                                       qty=qty,
+                                                       leverage=self.leverage)
+
         except Exception as e:
             failed(f"Failed to place order: {e}")
 
@@ -131,7 +147,7 @@ class Bybit:
 
         return await asyncio.gather(*tasks)
 
-    async def Subscribe (self, coinHab):
+    async def subscribe(self, coinHab):
         inform ("Subscribing...")
 
         bar = LineProgressBar(MaxLength = 50, text = "Loading ", maxValue = len(self.config.getValue("exchange", "Coins")), isShowPercent = True, isShowValue = True)
@@ -149,7 +165,7 @@ class Bybit:
 
         await asyncio.gather(*tasks)
 
-    def Refresh_Positions (self):
+    def refreshPositions (self):
         response = (self.session.get_positions(
             category=self.Category,
             settleCoin=self.SettleCoin,
@@ -186,9 +202,9 @@ class Bybit:
         if (int(response["retCode"]) == 0):
             if (len (response['result']['list'])> 0):
                 # pr (response['result']['list'])
-                self.Positions = response['result']['list']
+                self.positions = response['result']['list']
                 return response['result']['list']
-            self.Positions = None
+            self.positions = None
             return None
 
     def getMaxPositionValue (self, conf):

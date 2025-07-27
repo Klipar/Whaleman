@@ -1,4 +1,6 @@
 import asyncio
+import json
+from typing import Any, Dict
 from easy import Logger, Config
 
 class SocketClient:
@@ -11,15 +13,15 @@ class SocketClient:
 
     async def connect(self):
         self.reader, self.writer = await asyncio.open_connection(self.config.getValue("Socket server", "host"), self.config.getValue("Socket server", "port"))
-        print(f"Connection to {self.config.getValue("Socket server", "host")}:{self.config.getValue("Socket server", "port")}")
+        self.logger.inform(f"Connection to {self.config.getValue("Socket server", "host")}:{self.config.getValue("Socket server", "port")}")
 
         asyncio.create_task(self.listen())
 
-    async def send(self, message: str) -> None:
+    async def send(self, data: Dict[str, Any]) -> None:
         if self.writer is None:
-            print("No connection.")
+            self.logger.failed("No connection.")
             return
-        self.writer.write((message + '\n').encode('utf-8'))
+        self.writer.write((json.dumps(data) + '\n').encode('utf-8'))
         await self.writer.drain()
 
     async def listen(self):
@@ -27,11 +29,11 @@ class SocketClient:
             while True:
                 data = await self.reader.readline()
                 if not data:
-                    print("The server has closed the connection")
+                    self.logger.inform("The server has closed the connection")
                     break
-                print(f"{data.decode().strip()}")
+
         except Exception as e:
-            print(f"Reading error: {e}")
+            self.logger.failed(f"Reading error: {e}")
         finally:
             self.writer.close()
             await self.writer.wait_closed()
