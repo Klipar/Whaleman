@@ -20,7 +20,7 @@ class Bybit:
                             api_key=config.getValue("exchange", "Bybit", "API Public Key"),
                             api_secret=config.getValue("exchange", "Bybit", "API Secret Key"))
 
-        self.positions = self.refreshPositions()
+        self.positions = []
 
 
 
@@ -109,8 +109,6 @@ class Bybit:
                     takeProfit=takeProfit,
                     stopLoss=stopLoss))
 
-            self.refreshPositions()
-
             await self.telegramLogger.sendPlacingOrder(side=side,
                                                        prise=prise,
                                                        takeProfit=takeProfit,
@@ -153,46 +151,38 @@ class Bybit:
 
         await asyncio.gather(*tasks)
 
-    def refreshPositions(self):
-        response = (self.session.get_positions(
-                    category=self.config.getValue("exchange", "Bybit", "Category of trading"),
-                    settleCoin=self.config.getValue("exchange", "Bybit", "SettleCoin")))
+    async def refreshPositions(self):
+        response = self.session.get_positions(category=self.config.getValue("exchange", "Bybit", "Category of trading"),
+                                              settleCoin=self.config.getValue("exchange", "Bybit", "SettleCoin"))
 
-
-        for i in response['result']['list']:
-            if (int(response['time']) >= int(i['updatedTime'])+1000*self.config.getValue("exchange", "Trade", "Candle time")*self.CountOfCandleBeforeMarketStop*60 and i['unrealisedPnl'] <= 0.05):
-                # print (i['updatedTime'])
-
-                t = (self.session.get_kline(
-                    category="linear",
-                    symbol=i['symbol'],
-                    interval=1,
-                    limit=1
-                ))
+        openOrders = []
+        for resp in response['result']['list']:
+            if (int(response['time']) >= int(resp['updatedTime'])+60000*self.config.getValue("exchange", "Trade", "Candle time")*self.config.getValue("exchange", "Trade", "Max Count of candle before force closing order") or
+                float(resp['unrealisedPnl']) >= self.config.getValue("exchange", "Trade", "Min acceptable profit for pre force closing") and
+                int(response['time']) >= int(resp['updatedTime'])+60000*self.config.getValue("exchange", "Trade", "Candle time")*self.config.getValue("Max Count of candle before allowed to close order on acceptable profit")):
 
                 try:
-                    (self.session.set_trading_stop(
-                        category="linear",
-                        symbol=i['symbol'],
-                        stopLoss = float(t['result']['list'][0][4]),
-                        # take_profit = float(t['result']['list'][0][4])+3,
-                        # TrailingStop = 0.1,
-                        slTriggerBy="MarkPrice",
-                        positionIdx=0
-                    ))
-                    warn (f"canseled order on {i['symbol']}")
+                    side = "Sell" if resp["side"] == "Buy" else "Buy"
+                    self.session.place_order(category=response["result"]["category"],
+                                             symbol=resp['symbol'],
+                                             orderType="Market",
+                                             side=side,
+                                             qty=resp['size'],
+                                             reduce_only=True,
+                                             close_on_trigger=False)
+
+                    await self.telegramLogger.sendToAll(f"Closed order on coin: {resp['symbol']}") # TODO: Add another request to telegram bot for closing orders
+                    warn (f"Canceled order on {resp['symbol']}")
+
                 except Exception as e:
-                    print ("e")
+                    failed(f"Failed to close order on symbol {resp['symbol']}:\n{e}")
 
+            else:
+                openOrders.append(resp)
 
+        if int(response["retCode"]) == 0:
+            self.positions = openOrders
 
-        if (int(response["retCode"]) == 0):
-            if (len (response['result']['list'])> 0):
-                # pr (response['result']['list'])
-                self.positions = response['result']['list']
-                return response['result']['list']
-            self.positions = None
-            return None
 
     def getMaxPositionValue(self):
         maxPositionPercent = self.config.getValue("exchange", "Trade", "Max position percent from balance")

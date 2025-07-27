@@ -15,6 +15,7 @@ async def main ():
     await telegramLogger.sendToAll("Starting trading bot...")
 
     bybit = Bybit(globalConfig, telegramLogger)
+    await bybit.refreshPositions()
 
     coin_hab = CoinHab(globalConfig, bybit)
     await coin_hab.initializeCoins(bybit)
@@ -24,7 +25,7 @@ async def main ():
     await telegramLogger.sendToAll("Bot started successfully!")
 
     while True:
-        bybit.refreshPositions()
+        await bybit.refreshPositions()
         # config.refreshConfig()
 
 if __name__ == "__main__":
