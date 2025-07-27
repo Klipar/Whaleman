@@ -5,14 +5,14 @@ anyio==4.4.0
 attrs==24.2.0
 certifi==2024.7.4
 charset-normalizer==3.3.2
-easy @ git+https://github.com/Klipar/easy.git@30a070bec705e9a0e1bb1111671c4abc07d2ce1e
+easy @ git+https://github.com/Klipar/easy.git@2fd2d2b6d080a25a8327f7a080b17b23ff08a1e4
 frozenlist==1.4.1
 h11==0.14.0
 httpcore==1.0.5
 httpx==0.27.0
 idna==3.7
 multidict==6.0.5
-pybit==5.8.0
+pybit==5.11.0
 pycryptodome==3.20.0
 python-telegram-bot==21.4
 requests==2.32.3
