@@ -4,7 +4,7 @@ from bybit import Bybit
 from easy.message import *
 
 def main ():
-    config = Config("Configs/work.json")
+    config = Config("Configs/developing.json")
 
     bybit = Bybit(config)
 
@@ -15,7 +15,7 @@ def main ():
 
     while True:
         bybit.Refresh_Positions()
-        config.refreshConfig()
+        # config.refreshConfig()
 
 if __name__ == "__main__":
     main()

@@ -3,7 +3,7 @@ default_config = {
     "Version of config": "2.0",
     "exchange": {
         "Bybit": {
-            "API Pyblic Key": "******************",
+            "API Public Key": "******************",
             "API Secret Key": "************************************",
             "Categoria of treyding": "linear",
             "SettleCoin": "USDT"
@@ -11,13 +11,13 @@ default_config = {
         "Coins":[
                     "ATOMUSDT"
                 ],
-        "Treyd":{
-            "Max Treyding Balance in USDT": 5,
+        "Trade":{
+            "Max Tradeing Balance in USDT": 5,
             "First step in persent from treyding balance": 20,
             "Next steps prise in percent moowing from last order prise": 0.3,
             "Multiplier to increase the deal value": 0.5,
             "Sliding persent from entering prise":0.3,
-            "Max count of cendals for awereg a treyd wolume": 200,
+            "Max count of candles for average a trade volume": 200,
             "Cendel time": 1,
 
             "Take profit percent from entering prise": 0.5,
@@ -32,7 +32,7 @@ default_config = {
 
             "time factor for trading turnover": "linear",
 
-            "No Treyd": "False",
+            "No Trade": "False",
             "Only Buy": "False",
             "Only Sell": "False",
             "All coins on exchange": "False"

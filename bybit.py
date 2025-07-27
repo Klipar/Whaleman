@@ -1,43 +1,35 @@
-# from multiprocessing import Process
-# from time import sleep
-
-
-from easy.message import failed, success, inform, warn, test, pr
+from easy.message import *
+from easy import Config
 from pybit.unified_trading import WebSocket
 from pybit.unified_trading import HTTP
-from time import sleep
 from easy.animations import LineProgressBar, SimpleAnimation
 import aiohttp
 import asyncio
 
-
 class Bybit:
-    def __init__(self, config):
-
-        self.publicKey = config.getValue("exchange", "Bybit", "API Pyblic Key")
-        self.sycretKey = config.getValue("exchange", "Bybit", "API Secret Key")
-        self.No_Treyde = config.getValue("exchange", "Treyd", "No Treyd")
+    def __init__(self, config: Config):
+        self.No_Tradee = config.getValue("exchange", "Trade", "No Trade")
         self.Category  = config.getValue("exchange", "Bybit", "Categoria of treyding")
-        self.Candel_time = config.getValue("exchange", "Treyd", "Cendel time")
+        self.Candel_time = config.getValue("exchange", "Trade", "Cendel time")
         self.SettleCoin = config.getValue("exchange", "Bybit", "SettleCoin")
         self.ws = None
         self.session = HTTP(
-            testnet=False,
-            api_key=self.publicKey,
-            api_secret=self.sycretKey,
+            testnet=config.getValue("exchange", "Bybit", "Testnet"),
+            api_key=config.getValue("exchange", "Bybit", "API Public Key"),
+            api_secret=config.getValue("exchange", "Bybit", "API Secret Key"),
         )
         self.Positions = self.Refresh_Positions ()
-        self.Sliding_Persend = float(config.getValue("exchange", "Treyd", "Sliding persent from entering prise"))
-        self.TakeProfitPersent = float(config.getValue("exchange", "Treyd", "Take profit percent from entering prise"))
-        self.StopLoss_Persent  = float(config.getValue("exchange", "Treyd", "Stop lose percent from entering prise"))
-        self.Balanse = float(config.getValue("exchange", "Treyd", "Max Treyding Balance in USDT"))
-        self.Position_Multiplayer = float(config.getValue("exchange", "Treyd", "Multiplier to increase the deal value"))
+        self.Sliding_Persend = float(config.getValue("exchange", "Trade", "Sliding persent from entering prise"))
+        self.TakeProfitPersent = float(config.getValue("exchange", "Trade", "Take profit percent from entering prise"))
+        self.StopLoss_Persent  = float(config.getValue("exchange", "Trade", "Stop lose percent from entering prise"))
+        self.Balanse = float(config.getValue("exchange", "Trade", "Max Tradeing Balance in USDT"))
+        self.Position_Multiplayer = float(config.getValue("exchange", "Trade", "Multiplier to increase the deal value"))
         self.Max_Position_Value = float(self.Get_Max_Position_Value(config))
-        self.Next_Persent_step = float(config.getValue("exchange", "Treyd", "Next steps prise in percent moowing from last order prise"))
+        self.Next_Persent_step = float(config.getValue("exchange", "Trade", "Next steps prise in percent moowing from last order prise"))
 
-        self.FirstStepPersent = float(config.getValue("exchange", "Treyd", "First step in persent from treyding balance"))
-        self.leverage = float(config.getValue("exchange", "Treyd", "leverage"))
-        self.MaxOrderPerCoin = int(config.getValue("exchange", "Treyd", "Max orders per coin"))
+        self.FirstStepPersent = float(config.getValue("exchange", "Trade", "First step in persent from treyding balance"))
+        self.leverage = float(config.getValue("exchange", "Trade", "leverage"))
+        self.MaxOrderPerCoin = int(config.getValue("exchange", "Trade", "Max orders per coin"))
     def Try_Plase_Order (self, coin, side):
         # pr ("Try_Plase_Order")
         # test(coin.Get_Last_Prise())
@@ -98,8 +90,8 @@ class Bybit:
         warn(f"--> {side} {symbol}")
 
 
-        if (self.No_Treyde == True):
-            failed (f"skped, no trade = {self.No_Treyde}")
+        if (self.No_Tradee == True):
+            failed (f"skped, no trade = {self.No_Tradee}")
             # self.bot.SEND_TG(warn(f"--> {side} {symbol}"))
             return 0
         try:
@@ -122,11 +114,11 @@ class Bybit:
         except Exception as e:
             failed(f"Failed to place order: {e}")
 
-    async def get_kline(self, symbol, Limit_of_Candels, session = None):
+    async def get_kline(self, symbol, limitOfCandles, session = None):
         payload = {}
         headers = {}
 
-        url = f"https://api.bybit.com/v5/market/kline?category={self.Category}&symbol={symbol}&interval={self.Candel_time}&limit={Limit_of_Candels}"
+        url = f"https://api.bybit.com/v5/market/kline?category={self.Category}&symbol={symbol}&interval={self.Candel_time}&limit={limitOfCandles}"
 
         async with session.get(url, headers=headers, data=payload) as response:
             data = await response.json()
@@ -146,13 +138,13 @@ class Bybit:
             except Exception as e:
                 failed(f"ERROR while geting candels by REST api: {e}")
 
-    async def Get_Cline_For_all(self, symbols, Limit_of_Candels):
+    async def Get_Cline_For_all(self, symbols, limitOfCandles):
         # Сесія для повторного використання HTTP-з'єднань
         async with aiohttp.ClientSession() as session:
             tasks = []
             # Перебір символів і створення завдань
             for symbol in symbols:
-                task = asyncio.create_task(self.get_kline(symbol, Limit_of_Candels, session))
+                task = asyncio.create_task(self.get_kline(symbol, limitOfCandles, session))
                 tasks.append(task)
 
             # Виконання всіх завдань
@@ -223,7 +215,7 @@ class Bybit:
 
     def Get_Max_Position_Value (self, conf):
         self.Balanse
-        Max_Position_Persent = float(conf.getValue("exchange", "Treyd", "Max position persent from balance"))
+        Max_Position_Persent = float(conf.getValue("exchange", "Trade", "Max position persent from balance"))
         return ((self.Balanse/100)*Max_Position_Persent)
 
 

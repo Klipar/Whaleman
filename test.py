@@ -8,7 +8,7 @@ session = HTTP(
 CountOfCandleBeforeMarketStop = 5
 CendelTime = 1
 Sliding_Persend = 0.005
-TreydCategory = "linear"
+TradeCategory = "linear"
 
 result = (session.get_positions(
     category="linear",

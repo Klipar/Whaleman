@@ -1,77 +1,69 @@
-from easy.message import failed, success, inform, warn, test, pr
+from easy import failed, success, inform, warn, test, pr, Config
 import asyncio
 import aiohttp
 from conditions import CONDITION
 # import json
 from easy.animations import *
 
+from priceStamp import PriceStamp
+
 class Coin:
-    def __init__(self, conf, coin, Bybit):
-        self.Limit_of_Candels = conf.getValue("exchange", "Treyd", "Max count of cendals for awereg a treyd wolume")
-        self.Coin = coin
+    def __init__(self, config: Config, coin: str, Bybit):
+        self.limitOfCandles = config.getValue("exchange", "Trade", "Max count of candles for average a trade volume")
+        self.coin = coin
 
         self.Bybit = Bybit
-        self.conf = conf
+        self.config = config
 
-        self.rows = 5    # Кількість типів елементів в масиві
-        # Створення двовимірного списку, заповненого нулями
-        self.List_of_walues = [[0] * self.Limit_of_Candels for _ in range( self.rows)]
-        '''
-        self.List_of_walues = [  ['open']
-                                 ['high']
-                                 ['low']
-                                 ['close']
-                                 ['turnover']
-                              ]
-        '''
+        self.rows = 5
+        self.listOfValues = [[0] * self.limitOfCandles for _ in range( self.rows)]
 
         self.Last_Candle_Start_time = 0
-        self.Curent_Candle_Time = 60000
+        self.currentCandleTime = 60000
 
 
-        self.Prise_Rounf = None
-        self.Qty_Step_for_Round = None
+        self.priseRound = None
+        self.qtyStepForRound = None
 
-    def Get_Curent_order_prise (self):
-        return self.Get_Curent_order_prise
-    def Get_Coin (self):
-        return self.Coin
+    def getCoin (self):
+        return self.coin
 
     def Round_Qty (self, qty):
-        return (round(float(qty) / self.Qty_Step_for_Round) * self.Qty_Step_for_Round)
+        return (round(float(qty) / self.qtyStepForRound) * self.qtyStepForRound)
     def Round_Prise (self, prise):
-        return round(float(prise), self.Prise_Rounf)
+        return round(float(prise), self.priseRound)
 
     def Set_Round(self, response):
-        # pr (response)
-        self.Prise_Rounf = int(response['priceScale'])
-        self.Qty_Step_for_Round = float(response['lotSizeFilter']['qtyStep'])
+        self.priseRound = int(response['priceScale'])
+        self.qtyStepForRound = float(response['lotSizeFilter']['qtyStep'])
 
     def Process_Values(self, data):
+        ps = PriceStamp(data["data"][0])
+        
         if (int(data['data'][0]['start']) == int(self.Last_Candle_Start_time)):
 
-            # self.List_of_walues[0][self.Limit_of_Candels-1] = float(data['data'][0]['open'])
-            self.List_of_walues[1][0] = float(data['data'][0]['high'])
-            self.List_of_walues[2][0] = float(data['data'][0]['low'])
-            self.List_of_walues[3][0] = float(data['data'][0]['close'])
-            self.List_of_walues[4][0] = float(data['data'][0]['turnover'])
-            self.Curent_Candle_Time = int(data['data'][0]['timestamp'])-int(data['data'][0]['start'])
+            # self.List_of_walues[0][self.limitOfCandles-1] = float(data['data'][0]['open'])
+            self.listOfValues[1][0] = float(data['data'][0]['high'])
+            self.listOfValues[2][0] = float(data['data'][0]['low'])
+            self.listOfValues[3][0] = float(data['data'][0]['close'])
+            self.listOfValues[4][0] = float(data['data'][0]['turnover'])
+            self.currentCandleTime = int(data['data'][0]['timestamp'])-int(data['data'][0]['start'])
             # pr(self.Curent_Candle_Time)
         elif ((int(data['data'][0]['start']-60000)) == int(self.Last_Candle_Start_time)):
             # warn("NEW CANDLE")
             for i in range (0, 5):
-                self.List_of_walues[i].pop(0)
-            self.List_of_walues[0].insert(0, float(data['data'][0]['open']))
-            self.List_of_walues[1].insert(0, float(data['data'][0]['high']))
-            self.List_of_walues[2].insert(0, float(data['data'][0]['low']))
-            self.List_of_walues[3].insert(0, float(data['data'][0]['close']))
-            self.List_of_walues[4].insert(0, float(data['data'][0]['turnover']))
+                self.listOfValues[i].pop(0)
+            self.listOfValues[0].insert(0, float(data['data'][0]['open']))
+            self.listOfValues[1].insert(0, float(data['data'][0]['high']))
+            self.listOfValues[2].insert(0, float(data['data'][0]['low']))
+            self.listOfValues[3].insert(0, float(data['data'][0]['close']))
+            self.listOfValues[4].insert(0, float(data['data'][0]['turnover']))
 
             self.Last_Candle_Start_time = int(data['data'][0]['start'])
-            self.Curent_Candle_Time = int(data['data'][0]['timestamp'])-int(data['data'][0]['start'])
+            self.currentCandleTime = int(data['data'][0]['timestamp'])-int(data['data'][0]['start'])
         else:
-            coin = [self.Coin]
-            result = asyncio.run(self.Bybit.Get_Cline_For_all(coin, self.Limit_of_Candels))
+            coin = [self.coin]
+            result = asyncio.run(self.Bybit.Get_Cline_For_all(coin, self.limitOfCandles))
 
             if (int(result[0]['retCode']) == 0):
                 self.coins[result[0]['result']['symbol']].Inicialize(result[0])
@@ -80,19 +72,19 @@ class Coin:
 
             warn ("Data come after one candle, restructing....")
             warn (data['topic'])
-        CONDITION(self.conf, self.Bybit, self)
+        CONDITION(self.config, self.Bybit, self)
 
     def Inicialize (self, data):
-        for i in range (0, self.Limit_of_Candels):
-            self.List_of_walues[0][i] = float(data['result']['list'][i][1])
-            self.List_of_walues[1][i] = float(data['result']['list'][i][2])
-            self.List_of_walues[2][i] = float(data['result']['list'][i][3])
-            self.List_of_walues[3][i] = float(data['result']['list'][i][4])
-            self.List_of_walues[4][i] = float(data['result']['list'][i][6])
+        for i in range (0, self.limitOfCandles):
+            self.listOfValues[0][i] = float(data['result']['list'][i][1])
+            self.listOfValues[1][i] = float(data['result']['list'][i][2])
+            self.listOfValues[2][i] = float(data['result']['list'][i][3])
+            self.listOfValues[3][i] = float(data['result']['list'][i][4])
+            self.listOfValues[4][i] = float(data['result']['list'][i][6])
         self.Last_Candle_Start_time = int(data['result']['list'][0][0])
 
     def Get_Last_Prise (self):
-        return self.List_of_walues[3][0]
+        return self.listOfValues[3][0]
 
 
 class CoinHab:
@@ -123,7 +115,7 @@ class CoinHab:
         # coin.Process_Values(message)
 
     def Initialize_Coins (self, conf, Bybit):
-        result = asyncio.run(Bybit.Get_Cline_For_all(conf.getValue("exchange", "Coins"), conf.getValue("exchange", "Treyd", "Max count of cendals for awereg a treyd wolume")))
+        result = asyncio.run(Bybit.Get_Cline_For_all(conf.getValue("exchange", "Coins"), conf.getValue("exchange", "Trade", "Max count of candles for average a trade volume")))
 
         for i in range (len(self.coins)):
             if (int(result[i]['retCode']) == 0):
