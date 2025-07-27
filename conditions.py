@@ -1,14 +1,22 @@
-from easy.message import failed, success, inform, warn, test, pr
+from easy.message import *
 from easy import Config
 from bybit import Bybit
 from coin import Coin
+from queueManager import QueueManager
 
-def Checking_turnover (conf: Config, bybit: Bybit, data, coin: Coin):     # перевірка на наявність достатньо високих обємів торгів. Потім додати коофіцієнт часу.
-    average = float(calculate_average(data))
-    if (conf.getValue("exchange", "Trade", "time factor for trading turnover") == "linear"):
-        average = (average*(coin.Curent_Candle_Time/(bybit.Candel_time*60000)))
-    if (((float(data[0])/average)*100) > float(conf.getValue("exchange", "Trade", "Triger turnover persent"))):
+def checkingTurnover(config: Config, pricesQueueManager: QueueManager):     # перевірка на наявність достатньо високих обємів торгів. Потім додати коофіцієнт часу.
+    averageTurnover = pricesQueueManager.getAverage("turnover")
+    lastStamp = pricesQueueManager.getLatest()
+
+    if (config.getValue("exchange", "Trade", "time factor for trading turnover") == "linear"):
+        interval = lastStamp.interval
+        executedTimeOfLastCandle = lastStamp.close-lastStamp.timestamp
+
+        averageTurnover = averageTurnover*(executedTimeOfLastCandle/(interval*60000))
+
+    if (lastStamp.turnover/averageTurnover)*100 > config.getValue("exchange", "Trade", "Trigger turnover percent"):
         return 0
+
     return 1
 
 
@@ -35,11 +43,6 @@ def Checking_the_rate_of_price_change(conf, Bybit, coin):
                 Bybit.Try_Plase_Order(coin, "Buy")
 
 
-def calculate_average(data):
-        total = 0
-        for i in data:
-            total += float(i)
-        return (float(total) / len(data))
 def persent_mowe(a, b):
     # a --> b
     # якщо + то ціна піднялася, - то упала
@@ -48,8 +51,9 @@ def persent_mowe(a, b):
         exit()
     return ((b - a) / a) * 100
 
-def CONDITION (conf, Bybit, coin):
-    if(Checking_turnover (conf, Bybit, coin.List_of_walues[4], coin)): return 0 # перевірка достатніх обємів торгів
-    Checking_the_rate_of_price_change (conf, Bybit, coin)
+def CONDITION (config: Config, bybit: Bybit, coin: Coin):
+    if checkingTurnover (config=config,pricesQueueManager=coin.pricesQueueManager): return 0 # Check for sufficient trading volumes
+
+    Checking_the_rate_of_price_change (config, bybit, coin)
 
     return 0

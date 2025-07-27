@@ -57,7 +57,7 @@ class CoinHab:
     def __init__(self, conf: Config, bybit: Bybit):
         self.animation = SimpleAnimation()
         self.coins: Dict[str, Coin] = {}
-        self.trashText = f"kline.{conf.getValue("exchange", "Trade", "Cendel time")}." # зайвий текст що приходить в відповіді від сокета. Він видаляється щоб лишити лише назву монети
+        self.trashText = f"kline.{conf.getValue("exchange", "Trade", "Candle time")}." # зайвий текст що приходить в відповіді від сокета. Він видаляється щоб лишити лише назву монети
         self.coinSet (conf, bybit)
         self.SetRounds(conf, bybit)
         inform (f"Founded {len(self.coins)} Coins")

@@ -10,7 +10,7 @@ class Bybit:
     def __init__(self, config: Config):
         self.No_Tradee = config.getValue("exchange", "Trade", "No Trade")
         self.Category  = config.getValue("exchange", "Bybit", "Categoria of treyding")
-        self.Candel_time = config.getValue("exchange", "Trade", "Cendel time")
+        self.Candel_time = config.getValue("exchange", "Trade", "Candle time")
         self.SettleCoin = config.getValue("exchange", "Bybit", "SettleCoin")
         self.ws = None
         self.session = HTTP(

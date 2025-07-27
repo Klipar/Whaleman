@@ -55,3 +55,15 @@ class QueueManager:
                     stamp.updateStamp(data)
 
             self.queue.replaceQueue(queueList)
+
+    def getAverage(self, parameter: str) -> float:
+        stampList: List[PriceStamp] = self.queue.view()
+
+        sum: float = 0
+        for stamp in stampList:
+            sum += getattr(stamp, parameter)
+
+        return sum/len(stampList)
+
+    def getLatest(self) -> PriceStamp:
+        return self.queue.latest()

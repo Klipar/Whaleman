@@ -18,7 +18,7 @@ default_config = {
             "Multiplier to increase the deal value": 0.5,
             "Sliding persent from entering prise":0.3,
             "Max count of candles for average a trade volume": 200,
-            "Cendel time": 1,
+            "Candle time": 1,
 
             "Take profit percent from entering prise": 0.5,
             "Stop lose percent from entering prise": 1.5,
@@ -28,7 +28,7 @@ default_config = {
             "Max position persent from balance": 5,
 
             "cendel minimal move persents": [0.001, 0.1, 0.7, 3.5, 4],
-            "Triger turnover persent": 300,
+            "Trigger turnover percent": 300,
 
             "time factor for trading turnover": "linear",
 
