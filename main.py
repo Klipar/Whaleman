@@ -1,5 +1,5 @@
 from easy import Config
-from coin import CoinHab
+from coinHab import CoinHab
 from bybit import Bybit
 from easy.message import *
 
@@ -9,7 +9,7 @@ def main ():
     bybit = Bybit(config)
 
     coin_hab = CoinHab(config, bybit)
-    coin_hab.Initialize_Coins(config, bybit)
+    coin_hab.initializeCoins(config, bybit)
 
     bybit.Subscribe(config, coin_hab)
 

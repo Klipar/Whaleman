@@ -1,0 +1,43 @@
+from easy import failed, inform, Config
+from typing import Dict
+import asyncio
+from bybit import Bybit
+from easy.animations import *
+from coin import Coin
+
+class CoinHab:
+    def __init__(self, conf: Config, bybit: Bybit):
+        self.animation = SimpleAnimation()
+
+        self.coins: Dict[str, Coin] = {}
+
+        self.trashText = f"kline.{conf.getValue("exchange", "Trade", "Candle time")}." # extra text that comes in response from the socket. It is removed to leave only the coin name
+
+        self.coinSet (conf, bybit)
+        self.setRounding(conf, bybit)
+
+        inform (f"Founded {len(self.coins)} Coins")
+
+    def setRounding(self, conf, bybit: Bybit):
+        response = bybit.Get_Instruments_Info()
+        for i in response["result"]["list"]:
+            for j in ((conf.getValue("exchange", "Coins"))):
+                if (i["symbol"] == j):
+                    self.coins[j].setRounding(i)
+
+    def handler(self, message):
+        inform(self.animation.step(), en="\r")
+        self.coins[message['topic'].replace(self.trashText, "")].processValues(message)
+
+    def initializeCoins (self, conf: Config, bybit: Bybit):
+        result = asyncio.run(bybit.Get_Cline_For_all(conf.getValue("exchange", "Coins"), conf.getValue("exchange", "Trade", "Max count of candles for average a trade volume")))
+
+        for i in range (len(self.coins)):
+            if (int(result[i]['retCode']) == 0):
+                self.coins[result[i]['result']['symbol']].initialize(result[i])
+            else:
+                failed (result[i])
+
+    def coinSet (self, conf: Config, bybit: Bybit):
+        for coin in ((conf.getValue("exchange", "Coins"))):
+            self.coins[coin] = Coin(conf, coin, bybit)
