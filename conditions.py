@@ -1,6 +1,5 @@
 from easy.message import *
 from easy import Config
-from bybit import Bybit
 from coin import Coin
 from queueManager import QueueManager
 
@@ -19,8 +18,8 @@ def checkingTurnover(config: Config, pricesQueueManager: QueueManager):
 
     return 1
 
-def Checking_the_rate_of_price_change(config: Config, bybit: Bybit, coin: Coin):
-    thresholdPercentages = config.getValue("exchange", "Trade", "candles minimal move percents")
+def checkingRateOfPriceChange(coin: Coin):
+    thresholdPercentages = coin.config.getValue("exchange", "Trade", "candles minimal move percents")
     stampsList = coin.pricesQueueManager.getStampsList()
     latestStamp = coin.pricesQueueManager.getLatest()
 
@@ -28,21 +27,20 @@ def Checking_the_rate_of_price_change(config: Config, bybit: Bybit, coin: Coin):
         different = percentMove(stampsList[-(i+1)].open, latestStamp.close) # TODO: In future can be changed to calculate not from "open" candle prise but from avg or something like that
 
         if different > thresholdPercentages[i]:
-            if config.getValue("exchange", "Trade", "Only Buy"):
+            if coin.config.getValue("exchange", "Trade", "Only Buy"):
                 warn(f"Only Buy, order blocked for {coin.Get_Coin()}")
                 return
 
             success ("TRY Sell")
-            bybit.requestForPlacingOrder(coin, "Sell")
+            coin.bybit.requestForPlacingOrder(coin, "Sell")
 
         elif -different > thresholdPercentages[i]:
-            if config.getValue("exchange", "Trade", "Only Sell"):
+            if coin.config.getValue("exchange", "Trade", "Only Sell"):
                 warn(f"Only Sell, order blocked for {coin.Get_Coin()}")
                 return
 
             success ("TRY BUY")
-            bybit.requestForPlacingOrder(coin, "Buy")
-
+            coin.bybit.requestForPlacingOrder(coin, "Buy")
 
 def percentMove(a: float, b: float) -> float:
     """
@@ -63,7 +61,7 @@ def percentMove(a: float, b: float) -> float:
 
     return ((b - a) / a) * 100
 
-def shackOrderConditions (config: Config, bybit: Bybit, coin: Coin):
-    if checkingTurnover (config=config, pricesQueueManager=coin.pricesQueueManager): return 0 # Check for sufficient trading volumes
+def checkOrderConditions(coin: Coin):
+    if checkingTurnover(config=coin.config, pricesQueueManager=coin.pricesQueueManager): return 0 # Check for sufficient trading volumes
 
-    Checking_the_rate_of_price_change (config, bybit, coin)
+    checkingRateOfPriceChange(coin)

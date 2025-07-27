@@ -6,6 +6,7 @@ from easy.animations import LineProgressBar, SimpleAnimation
 import aiohttp
 import asyncio
 
+
 class Bybit:
     def __init__(self, config: Config):
         self.No_Tradee = config.getValue("exchange", "Trade", "No Trade")
@@ -31,11 +32,11 @@ class Bybit:
         self.leverage = float(config.getValue("exchange", "Trade", "leverage"))
         self.MaxOrderPerCoin = int(config.getValue("exchange", "Trade", "Max orders per coin"))
 
-    def requestForPlacingOrder (self, coin, side):
+    def requestForPlacingOrder (self, coin, side: str):
         if (self.Positions):
             for i in self.Positions:
                 if (i['symbol'] == coin.Get_Coin()):
-                    move = abs(float(coin.Get_Last_Prise()) - float(i['avgPrice'])) # Реальний здвиг ціни
+                    move = abs(float(coin.getLastPrise()) - float(i['avgPrice'])) # Реальний здвиг ціни
                     M_move = ((float(i['avgPrice'])/100)*self.Next_Persent_step)    # Максимальний здвиг ціни
                     if (move >= M_move):
                         PositionValue_No_Laverage = float(i['positionValue'])/float(i['leverage'])
@@ -45,15 +46,15 @@ class Bybit:
                                 # warn (f"All Goood to plase order another time for {side}")
                                 # PREPEARING TO PLASE ORDER
                                 symbol = coin.Get_Coin()
-                                qty = coin.Round_Qty((PositionValue_No_Laverage*self.Position_Multiplayer))
+                                qty = coin.roundQty((PositionValue_No_Laverage*self.Position_Multiplayer))
                                 if (side == "Buy"):
-                                    prise      = coin.Round_Prise(coin.Get_Last_Prise() + ((coin.Get_Last_Prise()/100)*self.Sliding_Persend))
-                                    takeProfit = coin.Round_Prise(coin.Get_Last_Prise() + ((coin.Get_Last_Prise()/100)*self.TakeProfitPersent))
-                                    stopLoss   = coin.Round_Prise(coin.Get_Last_Prise() - ((coin.Get_Last_Prise()/100)*self.StopLoss_Persent))
+                                    prise      = coin.roundPrise(coin.getLastPrise() + ((coin.getLastPrise()/100)*self.Sliding_Persend))
+                                    takeProfit = coin.roundPrise(coin.getLastPrise() + ((coin.getLastPrise()/100)*self.TakeProfitPersent))
+                                    stopLoss   = coin.roundPrise(coin.getLastPrise() - ((coin.getLastPrise()/100)*self.StopLoss_Persent))
                                 else:
-                                    prise = coin.Round_Prise(coin.Get_Last_Prise() - ((coin.Get_Last_Prise()/100)*self.Sliding_Persend))
-                                    takeProfit = coin.Round_Prise(coin.Get_Last_Prise() - ((coin.Get_Last_Prise()/100)*self.TakeProfitPersent))
-                                    stopLoss   = coin.Round_Prise(coin.Get_Last_Prise() + ((coin.Get_Last_Prise()/100)*self.StopLoss_Persent))
+                                    prise = coin.roundPrise(coin.getLastPrise() - ((coin.getLastPrise()/100)*self.Sliding_Persend))
+                                    takeProfit = coin.roundPrise(coin.getLastPrise() - ((coin.getLastPrise()/100)*self.TakeProfitPersent))
+                                    stopLoss   = coin.roundPrise(coin.getLastPrise() + ((coin.getLastPrise()/100)*self.StopLoss_Persent))
                                 # Plasing ORDERRRRR
                                     # success("=======================================================")
                                     # test (f"symbol = {symbol}, qty = {qty}, prise = {prise}, side = {side}, takeProfit = {takeProfit}, stopLoss = {stopLoss}")
@@ -69,15 +70,15 @@ class Bybit:
         # PREPEARING TO PLASE ORDER
         symbol = coin.Get_Coin()
 
-        qty = coin.Round_Qty((((self.Balanse/100)*self.FirstStepPersent)/coin.Get_Last_Prise())*self.leverage)
+        qty = coin.roundQty((((self.Balanse/100)*self.FirstStepPersent)/coin.getLastPrise())*self.leverage)
         if (side == "Buy"):
-            prise      = coin.Round_Prise(coin.Get_Last_Prise() + ((coin.Get_Last_Prise()/100)*self.Sliding_Persend))
-            takeProfit = coin.Round_Prise(coin.Get_Last_Prise() + ((coin.Get_Last_Prise()/100)*self.TakeProfitPersent))
-            stopLoss   = coin.Round_Prise(coin.Get_Last_Prise() - ((coin.Get_Last_Prise()/100)*self.StopLoss_Persent))
+            prise      = coin.roundPrise(coin.getLastPrise() + ((coin.getLastPrise()/100)*self.Sliding_Persend))
+            takeProfit = coin.roundPrise(coin.getLastPrise() + ((coin.getLastPrise()/100)*self.TakeProfitPersent))
+            stopLoss   = coin.roundPrise(coin.getLastPrise() - ((coin.getLastPrise()/100)*self.StopLoss_Persent))
         else:
-            prise = coin.Round_Prise(coin.Get_Last_Prise() - ((coin.Get_Last_Prise()/100)*self.Sliding_Persend))
-            takeProfit = coin.Round_Prise(coin.Get_Last_Prise() - ((coin.Get_Last_Prise()/100)*self.TakeProfitPersent))
-            stopLoss   = coin.Round_Prise(coin.Get_Last_Prise() + ((coin.Get_Last_Prise()/100)*self.StopLoss_Persent))
+            prise = coin.roundPrise(coin.getLastPrise() - ((coin.getLastPrise()/100)*self.Sliding_Persend))
+            takeProfit = coin.roundPrise(coin.getLastPrise() - ((coin.getLastPrise()/100)*self.TakeProfitPersent))
+            stopLoss   = coin.roundPrise(coin.getLastPrise() + ((coin.getLastPrise()/100)*self.StopLoss_Persent))
         # Plasing ORDERRRRR
         success("=======================================================")
         test (f"symbol = {symbol}, qty = {qty}, prise = {prise}, side = {side}, takeProfit = {takeProfit}, stopLoss = {stopLoss}")

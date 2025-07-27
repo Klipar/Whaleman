@@ -1,59 +1,44 @@
 from typing import Dict
-from easy import failed, success, inform, warn, test, pr, Config
+from easy import failed, inform, Config
 import asyncio
-import aiohttp
 from bybit import Bybit
 from easy.animations import *
 
-from priceStamp import PriceStamp
 from queueManager import QueueManager
 
 class Coin:
     def __init__(self, config: Config, coin: str, bybit: Bybit):
-        from conditions import shackOrderConditions
-        self.shackOrderConditions = shackOrderConditions
-
-        self.limitOfCandles = config.getValue("exchange", "Trade", "Max count of candles for average a trade volume")
-        self.coin: str = coin
+        from conditions import checkOrderConditions
+        self.checkOrderConditions = checkOrderConditions
 
         self.bybit: Bybit = bybit
         self.config: Config = config
 
-        self.listOfValues = [[0] * self.limitOfCandles for _ in range(5)]
+        self.coin: str = coin
 
-        self.Last_Candle_Start_time = 0
-        self.currentCandleTime = 60000
-
-        self.priseRound = None
-        self.qtyStepForRound = None
-
-    def getCoin (self):
-        return self.coin
-
-    def Round_Qty (self, qty):
+    def roundQty (self, qty):
         return (round(float(qty) / self.qtyStepForRound) * self.qtyStepForRound)
 
-    def Round_Prise (self, prise):
+    def roundPrise (self, prise):
         return round(float(prise), self.priseRound)
 
-    def Set_Round(self, response):
+    def setRound(self, response):
         self.priseRound = int(response['priceScale'])
         self.qtyStepForRound = float(response['lotSizeFilter']['qtyStep'])
 
-    def Process_Values(self, data):
+    def processValues(self, data):
         data['data'].sort(key=lambda x: x["start"])
 
         for data in data['data']:
             self.pricesQueueManager.updateQueue(data)
 
-        self.shackOrderConditions(self.config, self.bybit, self)
+        self.checkOrderConditions(self)
 
     def initialize (self, data):
         self.pricesQueueManager = QueueManager(data)
 
-    def Get_Last_Prise (self):
-        return self.listOfValues[3][0]
-
+    def getLastPrise (self):
+        return self.pricesQueueManager.getLatest().close
 
 class CoinHab:
     def __init__(self, conf: Config, bybit: Bybit):
@@ -69,11 +54,11 @@ class CoinHab:
         for i in response["result"]["list"]:
             for j in ((conf.getValue("exchange", "Coins"))):
                 if (i["symbol"] == j):
-                    self.coins[j].Set_Round(i)
+                    self.coins[j].setRound(i)
 
-    def handler (self, message):
+    def handler(self, message):
         inform(self.animation.step(), en="\r")
-        self.coins[message['topic'].replace(self.trashText, "")].Process_Values(message)
+        self.coins[message['topic'].replace(self.trashText, "")].processValues(message)
 
 
     def Initialize_Coins (self, conf: Config, bybit: Bybit):
