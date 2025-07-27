@@ -13,9 +13,9 @@ default_config = {
                     "ATOMUSDT"
                 ],
         "Trade":{
-            "Max Tradeing Balance in USDT": 5,
-            "First step in persent from treyding balance": 20,
-            "Next steps prise in percent moowing from last order prise": 0.3,
+            "Max Trading Balance in USDT": 5,
+            "First step in percent from trading balance": 20,
+            "Next steps prise in percent mowing from last order prise": 0.3,
             "Multiplier to increase the deal value": 0.5,
             "Sliding persent from entering prise":0.3,
             "Max count of candles for average a trade volume": 200,
@@ -26,7 +26,6 @@ default_config = {
             "leverage": 10,
             "Max Count of candle before forse closing order": 60,
 
-            "Max orders per coin": 1,
             "Max position percent from balance": 5,
 
             "candles minimal move percents": [0.001, 0.1, 0.7, 3.5, 4],

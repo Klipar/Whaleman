@@ -1,12 +1,10 @@
-from easy.message import *
-from easy import Config
 from pybit.unified_trading import WebSocket
 from pybit.unified_trading import HTTP
 from easy.animations import LineProgressBar
-import asyncio
-
 from telegramLogger import TelegramLogger
-
+from easy.message import *
+from easy import Config
+import asyncio
 
 class Bybit:
     def __init__(self, config: Config, telegramLogger: TelegramLogger):
@@ -22,80 +20,45 @@ class Bybit:
 
         self.positions = []
 
-
-
-
-
-        self.Sliding_Persend = float(config.getValue("exchange", "Trade", "Sliding persent from entering prise"))
-        self.TakeProfitPersent = float(config.getValue("exchange", "Trade", "Take profit percent from entering prise"))
-        self.StopLoss_Persent  = float(config.getValue("exchange", "Trade", "Stop lose percent from entering prise"))
-        self.Balance = float(config.getValue("exchange", "Trade", "Max Tradeing Balance in USDT"))
-        self.Position_Multiplayer = float(config.getValue("exchange", "Trade", "Multiplier to increase the deal value"))
-
-        self.Next_Persent_step = float(config.getValue("exchange", "Trade", "Next steps prise in percent moowing from last order prise"))
-
-        self.FirstStepPersent = float(config.getValue("exchange", "Trade", "First step in persent from treyding balance"))
-        self.MaxOrderPerCoin = int(config.getValue("exchange", "Trade", "Max orders per coin"))
-
-
-
     async def requestForPlacingOrder (self, coin, side: str):
         if (side == "Buy" and self.config.getValue("exchange", "Trade", "Only Sell") or
             side == "Sell" and self.config.getValue("exchange", "Trade", "Only Buy") or
             self.config.getValue("exchange", "Trade", "No Trade")):
             return
+        lastPrice = coin.getLastPrise()
 
-        if (self.positions):
-            for i in self.positions:
-                if (i['symbol'] == coin.coin):
-                    move = abs(float(coin.getLastPrise()) - float(i['avgPrice'])) # Реальний здвиг ціни
-                    M_move = ((float(i['avgPrice'])/100)*self.Next_Persent_step)    # Максимальний здвиг ціни
-                    if (move >= M_move):
-                        positionValueNoLeverage = float(i['positionValue'])/float(i['leverage'])
-                        expectedPositionValue = positionValueNoLeverage+(positionValueNoLeverage*self.Position_Multiplayer)
-                        if (expectedPositionValue <= self.getMaxPositionValue()):
-                            if (self.MaxOrderPerCoin > 1):
-                                # warn (f"All Goood to plase order another time for {side}")
-                                # PREPEARING TO PLASE ORDER
-                                symbol = coin.coin
-                                qty = coin.roundQty((positionValueNoLeverage*self.Position_Multiplayer))
-                                if (side == "Buy"):
-                                    prise      = coin.roundPrise(coin.getLastPrise() + ((coin.getLastPrise()/100)*self.Sliding_Persend))
-                                    takeProfit = coin.roundPrise(coin.getLastPrise() + ((coin.getLastPrise()/100)*self.TakeProfitPersent))
-                                    stopLoss   = coin.roundPrise(coin.getLastPrise() - ((coin.getLastPrise()/100)*self.StopLoss_Persent))
-                                else:
-                                    prise = coin.roundPrise(coin.getLastPrise() - ((coin.getLastPrise()/100)*self.Sliding_Persend))
-                                    takeProfit = coin.roundPrise(coin.getLastPrise() - ((coin.getLastPrise()/100)*self.TakeProfitPersent))
-                                    stopLoss   = coin.roundPrise(coin.getLastPrise() + ((coin.getLastPrise()/100)*self.StopLoss_Persent))
-                                # Plasing ORDERRRRR
-                                    # success("=======================================================")
-                                    # test (f"symbol = {symbol}, qty = {qty}, prise = {prise}, side = {side}, takeProfit = {takeProfit}, stopLoss = {stopLoss}")
-                                    # success("=======================================================")
-                                    await self.placeOrder(symbol = symbol, qty = qty, prise = prise, side = side, takeProfit = takeProfit, stopLoss = stopLoss)
-                        else:
-                            return
-                    failed ("Failed to plase order. limit are accesed")
-                    # pr(self.Positions)
+        qty = 0
+
+        for positions in self.positions:
+            if positions['symbol'] == coin.coin:
+                realMove = abs(lastPrice - float(positions['avgPrice'])) # real price movement
+                minAllowedMove = (float(positions['avgPrice'])/100)*float(self.config.getValue("exchange", "Trade", "Next steps prise in percent mowing from last order prise"))    # min allowed price movement to next order
+                if realMove < minAllowedMove:
                     return
 
-        # warn (f"All Goood to plase order for {side}")
-        # PREPEARING TO PLASE ORDER
-        symbol = coin.coin
+                else:
+                    positionValueNoLeverage = float(positions['positionValue'])/float(positions['leverage'])
+                    incrementedValue = positionValueNoLeverage*self.config.getValue("exchange", "Trade", "Multiplier to increase the deal value")
 
-        qty = coin.roundQty((((self.Balance/100)*self.FirstStepPersent)/coin.getLastPrise())*self.config.getValue("exchange", "Trade", "leverage"))
-        if (side == "Buy"):
-            prise      = coin.roundPrise(coin.getLastPrise() + ((coin.getLastPrise()/100)*self.Sliding_Persend))
-            takeProfit = coin.roundPrise(coin.getLastPrise() + ((coin.getLastPrise()/100)*self.TakeProfitPersent))
-            stopLoss   = coin.roundPrise(coin.getLastPrise() - ((coin.getLastPrise()/100)*self.StopLoss_Persent))
+                    if positionValueNoLeverage+incrementedValue > self.getMaxPositionValue():
+                        return
+
+                    else:
+                        qty = coin.roundQty(incrementedValue)
+
+        if qty == 0:
+            qty = coin.roundQty((((self.config.getValue("exchange", "Trade", "Max Trading Balance in USDT")/100)*self.config.getValue("exchange", "Trade", "First step in percent from trading balance"))/coin.getLastPrise())*self.config.getValue("exchange", "Trade", "leverage"))
+
+        if side == "Buy":
+            prise      = coin.roundPrise(lastPrice + ((lastPrice/100)*self.config.getValue("exchange", "Trade", "Sliding persent from entering prise")))
+            takeProfit = coin.roundPrise(lastPrice + ((lastPrice/100)*self.config.getValue("exchange", "Trade", "Take profit percent from entering prise")))
+            stopLoss   = coin.roundPrise(lastPrice - ((lastPrice/100)*self.config.getValue("exchange", "Trade", "Stop lose percent from entering prise")))
         else:
-            prise = coin.roundPrise(coin.getLastPrise() - ((coin.getLastPrise()/100)*self.Sliding_Persend))
-            takeProfit = coin.roundPrise(coin.getLastPrise() - ((coin.getLastPrise()/100)*self.TakeProfitPersent))
-            stopLoss   = coin.roundPrise(coin.getLastPrise() + ((coin.getLastPrise()/100)*self.StopLoss_Persent))
+            prise      = coin.roundPrise(lastPrice - ((lastPrice/100)*self.config.getValue("exchange", "Trade", "Sliding persent from entering prise")))
+            takeProfit = coin.roundPrise(lastPrice - ((lastPrice/100)*self.config.getValue("exchange", "Trade", "Take profit percent from entering prise")))
+            stopLoss   = coin.roundPrise(lastPrice + ((lastPrice/100)*self.config.getValue("exchange", "Trade", "Stop lose percent from entering prise")))
 
-        success("=======================================================")
-        test (f"symbol = {symbol}, qty = {qty}, prise = {prise}, side = {side}, takeProfit = {takeProfit}, stopLoss = {stopLoss}")
-        success("=======================================================")
-        await self.placeOrder(symbol = symbol, qty = qty, prise = prise, side = side, takeProfit = takeProfit, stopLoss = stopLoss)
+        await self.placeOrder(symbol = coin.coin, qty = qty, prise = prise, side = side, takeProfit = takeProfit, stopLoss = stopLoss)
 
     async def placeOrder(self, symbol, qty, prise, side, takeProfit, stopLoss, orderType = "Limit"):
         try:
@@ -183,10 +146,9 @@ class Bybit:
         if int(response["retCode"]) == 0:
             self.positions = openOrders
 
-
     def getMaxPositionValue(self):
         maxPositionPercent = self.config.getValue("exchange", "Trade", "Max position percent from balance")
-        return (self.Balance/100)*maxPositionPercent
+        return (self.config.getValue("exchange", "Trade", "Max Trading Balance in USDT")/100)*maxPositionPercent
 
     def getInstrumentsInfo(self):
         return self.session.get_instruments_info(category=self.config.getValue("exchange", "Bybit", "Category of trading"))

@@ -13,14 +13,14 @@ class Coin:
         self.coin: str = coin
 
     def roundQty(self, qty):
-        return (round(float(qty) / self.qtyRounding) * self.qtyRounding)
+        return round(float(qty), self.qtyRounding)
 
     def roundPrise(self, prise):
         return round(float(prise), self.priseRounding)
 
     def setRounding(self, response):
         self.priseRounding = int(response['priceScale'])
-        self.qtyRounding = float(response['lotSizeFilter']['qtyStep'])
+        self.qtyRounding = int(-1 * round(float(response['lotSizeFilter']['qtyStep'])).as_integer_ratio()[1].bit_length() + 1)
 
     async def processValues(self, data):
         data['data'].sort(key=lambda x: x["start"])
