@@ -16,40 +16,34 @@ class Bybit:
         self.webSocket = WebSocket(testnet=self.config.getValue("exchange", "Bybit", "Testnet"),
                                    channel_type=self.config.getValue("exchange", "Bybit", "Category of trading"))
 
-        self.noTrade = config.getValue("exchange", "Trade", "No Trade")
-        self.Category  = config.getValue("exchange", "Bybit", "Category of trading")
-        self.Candel_time = config.getValue("exchange", "Trade", "Candle time")
-        self.SettleCoin = config.getValue("exchange", "Bybit", "SettleCoin")
-        self.session = HTTP(
-            testnet=config.getValue("exchange", "Bybit", "Testnet"),
-            api_key=config.getValue("exchange", "Bybit", "API Public Key"),
-            api_secret=config.getValue("exchange", "Bybit", "API Secret Key"),
-        )
-        self.positions = self.refreshPositions ()
+        self.session = HTTP(testnet=config.getValue("exchange", "Bybit", "Testnet"),
+                            api_key=config.getValue("exchange", "Bybit", "API Public Key"),
+                            api_secret=config.getValue("exchange", "Bybit", "API Secret Key"))
+
+        self.positions = self.refreshPositions()
+
+
+
+
+
         self.Sliding_Persend = float(config.getValue("exchange", "Trade", "Sliding persent from entering prise"))
         self.TakeProfitPersent = float(config.getValue("exchange", "Trade", "Take profit percent from entering prise"))
         self.StopLoss_Persent  = float(config.getValue("exchange", "Trade", "Stop lose percent from entering prise"))
         self.Balance = float(config.getValue("exchange", "Trade", "Max Tradeing Balance in USDT"))
         self.Position_Multiplayer = float(config.getValue("exchange", "Trade", "Multiplier to increase the deal value"))
-        self.Max_Position_Value = float(self.getMaxPositionValue(config))
+
         self.Next_Persent_step = float(config.getValue("exchange", "Trade", "Next steps prise in percent moowing from last order prise"))
 
         self.FirstStepPersent = float(config.getValue("exchange", "Trade", "First step in persent from treyding balance"))
-        self.leverage = float(config.getValue("exchange", "Trade", "leverage"))
         self.MaxOrderPerCoin = int(config.getValue("exchange", "Trade", "Max orders per coin"))
 
+
+
     async def requestForPlacingOrder (self, coin, side: str):
-        # if coin.config.getValue("exchange", "Trade", "Only Buy"):
-            #     warn(f"Only Buy, order blocked for {coin.Get_Coin()}")
-            #     return
-
-            # success ("TRY Sell")
-
-        # if coin.config.getValue("exchange", "Trade", "Only Sell"):
-            #     warn(f"Only Sell, order blocked for {coin.Get_Coin()}")
-            #     return
-
-            # success ("TRY BUY")
+        if (side == "Buy" and self.config.getValue("exchange", "Trade", "Only Sell") or
+            side == "Sell" and self.config.getValue("exchange", "Trade", "Only Buy") or
+            self.config.getValue("exchange", "Trade", "No Trade")):
+            return
 
         if (self.positions):
             for i in self.positions:
@@ -57,14 +51,14 @@ class Bybit:
                     move = abs(float(coin.getLastPrise()) - float(i['avgPrice'])) # Реальний здвиг ціни
                     M_move = ((float(i['avgPrice'])/100)*self.Next_Persent_step)    # Максимальний здвиг ціни
                     if (move >= M_move):
-                        PositionValue_No_Laverage = float(i['positionValue'])/float(i['leverage'])
-                        Expectid_Position_value = PositionValue_No_Laverage+(PositionValue_No_Laverage*self.Position_Multiplayer)
-                        if (Expectid_Position_value <= self.Max_Position_Value):
+                        positionValueNoLeverage = float(i['positionValue'])/float(i['leverage'])
+                        expectedPositionValue = positionValueNoLeverage+(positionValueNoLeverage*self.Position_Multiplayer)
+                        if (expectedPositionValue <= self.getMaxPositionValue()):
                             if (self.MaxOrderPerCoin > 1):
                                 # warn (f"All Goood to plase order another time for {side}")
                                 # PREPEARING TO PLASE ORDER
                                 symbol = coin.coin
-                                qty = coin.roundQty((PositionValue_No_Laverage*self.Position_Multiplayer))
+                                qty = coin.roundQty((positionValueNoLeverage*self.Position_Multiplayer))
                                 if (side == "Buy"):
                                     prise      = coin.roundPrise(coin.getLastPrise() + ((coin.getLastPrise()/100)*self.Sliding_Persend))
                                     takeProfit = coin.roundPrise(coin.getLastPrise() + ((coin.getLastPrise()/100)*self.TakeProfitPersent))
@@ -88,7 +82,7 @@ class Bybit:
         # PREPEARING TO PLASE ORDER
         symbol = coin.coin
 
-        qty = coin.roundQty((((self.Balance/100)*self.FirstStepPersent)/coin.getLastPrise())*self.leverage)
+        qty = coin.roundQty((((self.Balance/100)*self.FirstStepPersent)/coin.getLastPrise())*self.config.getValue("exchange", "Trade", "leverage"))
         if (side == "Buy"):
             prise      = coin.roundPrise(coin.getLastPrise() + ((coin.getLastPrise()/100)*self.Sliding_Persend))
             takeProfit = coin.roundPrise(coin.getLastPrise() + ((coin.getLastPrise()/100)*self.TakeProfitPersent))
@@ -104,16 +98,9 @@ class Bybit:
         await self.placeOrder(symbol = symbol, qty = qty, prise = prise, side = side, takeProfit = takeProfit, stopLoss = stopLoss)
 
     async def placeOrder(self, symbol, qty, prise, side, takeProfit, stopLoss, orderType = "Limit"):
-        warn(f"--> {side} {symbol}")
-
-
-        if (self.noTrade == True):
-            failed (f"skped, no trade = {self.noTrade}")
-            # self.bot.SEND_TG(warn(f"--> {side} {symbol}"))
-            return 0
         try:
             success(self.session.place_order(
-                    category=self.Category,
+                    category=self.config.getValue("exchange", "Bybit", "Category of trading"),
                     symbol=symbol,
                     side=side,
                     orderType=orderType,
@@ -123,13 +110,14 @@ class Bybit:
                     stopLoss=stopLoss))
 
             self.refreshPositions()
+
             await self.telegramLogger.sendPlacingOrder(side=side,
                                                        prise=prise,
                                                        takeProfit=takeProfit,
                                                        stopLoss=stopLoss,
                                                        symbol=symbol,
                                                        qty=qty,
-                                                       leverage=self.leverage)
+                                                       leverage=self.config.getValue("exchange", "Trade", "leverage"))
 
         except Exception as e:
             failed(f"Failed to place order: {e}")
@@ -165,15 +153,14 @@ class Bybit:
 
         await asyncio.gather(*tasks)
 
-    def refreshPositions (self):
+    def refreshPositions(self):
         response = (self.session.get_positions(
-            category=self.Category,
-            settleCoin=self.SettleCoin,
-        ))
+                    category=self.config.getValue("exchange", "Bybit", "Category of trading"),
+                    settleCoin=self.config.getValue("exchange", "Bybit", "SettleCoin")))
 
 
         for i in response['result']['list']:
-            if (int(response['time']) >= int(i['updatedTime'])+1000*self.Candel_time*self.CountOfCandleBeforeMarketStop*60 and i['unrealisedPnl'] <= 0.05):
+            if (int(response['time']) >= int(i['updatedTime'])+1000*self.config.getValue("exchange", "Trade", "Candle time")*self.CountOfCandleBeforeMarketStop*60 and i['unrealisedPnl'] <= 0.05):
                 # print (i['updatedTime'])
 
                 t = (self.session.get_kline(
@@ -207,8 +194,8 @@ class Bybit:
             self.positions = None
             return None
 
-    def getMaxPositionValue (self, conf):
-        maxPositionPercent = conf.getValue("exchange", "Trade", "Max position percent from balance")
+    def getMaxPositionValue(self):
+        maxPositionPercent = self.config.getValue("exchange", "Trade", "Max position percent from balance")
         return (self.Balance/100)*maxPositionPercent
 
     def getInstrumentsInfo(self):
