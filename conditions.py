@@ -4,7 +4,7 @@ from bybit import Bybit
 from coin import Coin
 from queueManager import QueueManager
 
-def checkingTurnover(config: Config, pricesQueueManager: QueueManager):     # перевірка на наявність достатньо високих обємів торгів. Потім додати коофіцієнт часу.
+def checkingTurnover(config: Config, pricesQueueManager: QueueManager):
     averageTurnover = pricesQueueManager.getAverage("turnover")
     lastStamp = pricesQueueManager.getLatest()
 
@@ -19,41 +19,51 @@ def checkingTurnover(config: Config, pricesQueueManager: QueueManager):     # п
 
     return 1
 
+def Checking_the_rate_of_price_change(config: Config, bybit: Bybit, coin: Coin):
+    thresholdPercentages = config.getValue("exchange", "Trade", "candles minimal move percents")
+    stampsList = coin.pricesQueueManager.getStampsList()
+    latestStamp = coin.pricesQueueManager.getLatest()
 
-def Checking_the_rate_of_price_change(conf, Bybit, coin):
-    List_of_TRIGER_persents = (conf.getValue("exchange", "Trade", "cendel minimal move persents"))
+    for i in range (0, len(thresholdPercentages)):
+        different = percentMove(stampsList[-(i+1)].open, latestStamp.close) # TODO: In future can be changed to calculate not from "open" candle prise but from avg or something like that
 
-    for i in range (0, len(List_of_TRIGER_persents)):
-        dif = persent_mowe(float(coin.List_of_walues[0][i+1]), float(coin.List_of_walues[3][0]))
-        if (dif > 0):
-            if (dif > float(List_of_TRIGER_persents[i])):
-                test (f"{dif} ?? {float(List_of_TRIGER_persents[i])}")
-                if conf.getValue("exchange", "Trade", "Only Buy"):
-                    warn(f"Only Buy, coin si  === > {coin.Get_Coin()}")
-                    return
-                success ("TRY Sell")
-                Bybit.Try_Plase_Order(coin, "Sell")
-        else:
-            if (dif*(-1) > float(List_of_TRIGER_persents[i])):
-                test (f"{dif} ?? {float(List_of_TRIGER_persents[i])}")
-                if conf.getValue("exchange", "Trade", "Only Sell"):
-                    warn(f"Only Sell, coin si  === > {coin.Get_Coin()}")
-                    return
-                success ("TRY BUY")
-                Bybit.Try_Plase_Order(coin, "Buy")
+        if different > thresholdPercentages[i]:
+            if config.getValue("exchange", "Trade", "Only Buy"):
+                warn(f"Only Buy, order blocked for {coin.Get_Coin()}")
+                return
+
+            success ("TRY Sell")
+            bybit.requestForPlacingOrder(coin, "Sell")
+
+        elif -different > thresholdPercentages[i]:
+            if config.getValue("exchange", "Trade", "Only Sell"):
+                warn(f"Only Sell, order blocked for {coin.Get_Coin()}")
+                return
+
+            success ("TRY BUY")
+            bybit.requestForPlacingOrder(coin, "Buy")
 
 
-def persent_mowe(a, b):
-    # a --> b
-    # якщо + то ціна піднялася, - то упала
+def percentMove(a: float, b: float) -> float:
+    """
+    Calculate the percentage change from value 'a' to value 'b'.
+
+    Parameters:
+    a (float): The previous value.
+    b (float): The current value.
+
+    Returns:
+    float: The percentage change from 'a' to 'b'.
+
+    Raises:
+    ValueError: If 'a' is zero to prevent division by zero.
+    """
     if a == 0:
-        failed("A cant be zero.")
-        exit()
+        raise ValueError("\"A\" cant be zero!")
+
     return ((b - a) / a) * 100
 
-def CONDITION (config: Config, bybit: Bybit, coin: Coin):
-    if checkingTurnover (config=config,pricesQueueManager=coin.pricesQueueManager): return 0 # Check for sufficient trading volumes
+def shackOrderConditions (config: Config, bybit: Bybit, coin: Coin):
+    if checkingTurnover (config=config, pricesQueueManager=coin.pricesQueueManager): return 0 # Check for sufficient trading volumes
 
     Checking_the_rate_of_price_change (config, bybit, coin)
-
-    return 0

@@ -3,7 +3,6 @@ from easy import failed, success, inform, warn, test, pr, Config
 import asyncio
 import aiohttp
 from bybit import Bybit
-from conditions import CONDITION
 from easy.animations import *
 
 from priceStamp import PriceStamp
@@ -11,6 +10,9 @@ from queueManager import QueueManager
 
 class Coin:
     def __init__(self, config: Config, coin: str, bybit: Bybit):
+        from conditions import shackOrderConditions
+        self.shackOrderConditions = shackOrderConditions
+
         self.limitOfCandles = config.getValue("exchange", "Trade", "Max count of candles for average a trade volume")
         self.coin: str = coin
 
@@ -44,7 +46,7 @@ class Coin:
         for data in data['data']:
             self.pricesQueueManager.updateQueue(data)
 
-        CONDITION(self.config, self.bybit, self)
+        self.shackOrderConditions(self.config, self.bybit, self)
 
     def initialize (self, data):
         self.pricesQueueManager = QueueManager(data)

@@ -49,21 +49,24 @@ class QueueManager:
                 pass # TODO: write call back for fool updating candle data (coinHab.Initialize_Coins())
 
         else: # we get update on old candle. searching and updating
-            queueList: List[PriceStamp] = self.queue.view()
-            for stamp in queueList:
+            stampsList: List[PriceStamp] = self.queue.view()
+            for stamp in stampsList:
                 if int(data['start']) == stamp.start:
                     stamp.updateStamp(data)
 
-            self.queue.replaceQueue(queueList)
+            self.queue.replaceQueue(stampsList)
 
     def getAverage(self, parameter: str) -> float:
-        stampList: List[PriceStamp] = self.queue.view()
+        stampsList: List[PriceStamp] = self.queue.view()
 
         sum: float = 0
-        for stamp in stampList:
+        for stamp in stampsList:
             sum += getattr(stamp, parameter)
 
-        return sum/len(stampList)
+        return sum/len(stampsList)
 
     def getLatest(self) -> PriceStamp:
         return self.queue.latest()
+
+    def getStampsList(self) -> List[PriceStamp]:
+        return self.queue.view()

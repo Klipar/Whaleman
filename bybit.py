@@ -30,9 +30,8 @@ class Bybit:
         self.FirstStepPersent = float(config.getValue("exchange", "Trade", "First step in persent from treyding balance"))
         self.leverage = float(config.getValue("exchange", "Trade", "leverage"))
         self.MaxOrderPerCoin = int(config.getValue("exchange", "Trade", "Max orders per coin"))
-    def Try_Plase_Order (self, coin, side):
-        # pr ("Try_Plase_Order")
-        # test(coin.Get_Last_Prise())
+
+    def requestForPlacingOrder (self, coin, side):
         if (self.Positions):
             for i in self.Positions:
                 if (i['symbol'] == coin.Get_Coin()):

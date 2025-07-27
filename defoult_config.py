@@ -1,12 +1,13 @@
 default_config = {
-    "GENERAL INFO":"Its general config.  Notise:\"cendel minimal move persents\" is range of persents thets create minimal percent of cendl moowing calculated by increasing count of cendls",
+    "GENERAL INFO":"Its general config.  Notise:\"candles minimal move percents\" is range of persents thets create minimal percent of cendl moowing calculated by increasing count of cendls",
     "Version of config": "2.0",
     "exchange": {
         "Bybit": {
             "API Public Key": "******************",
             "API Secret Key": "************************************",
             "Categoria of treyding": "linear",
-            "SettleCoin": "USDT"
+            "SettleCoin": "USDT",
+            "Testnet" : "False"
         },
         "Coins":[
                     "ATOMUSDT"
@@ -23,11 +24,12 @@ default_config = {
             "Take profit percent from entering prise": 0.5,
             "Stop lose percent from entering prise": 1.5,
             "leverage": 10,
+            "Max Count of candle before forse closing order": 60,
 
             "Max orders per coin": 1,
             "Max position persent from balance": 5,
 
-            "cendel minimal move persents": [0.001, 0.1, 0.7, 3.5, 4],
+            "candles minimal move percents": [0.001, 0.1, 0.7, 3.5, 4],
             "Trigger turnover percent": 300,
 
             "time factor for trading turnover": "linear",
