@@ -1,26 +1,25 @@
+from typing import Dict
 from easy import failed, success, inform, warn, test, pr, Config
 import asyncio
 import aiohttp
+from bybit import Bybit
 from conditions import CONDITION
-# import json
 from easy.animations import *
 
 from priceStamp import PriceStamp
 
 class Coin:
-    def __init__(self, config: Config, coin: str, Bybit):
+    def __init__(self, config: Config, coin: str, bybit: Bybit):
         self.limitOfCandles = config.getValue("exchange", "Trade", "Max count of candles for average a trade volume")
-        self.coin = coin
+        self.coin: str = coin
 
-        self.Bybit = Bybit
-        self.config = config
+        self.bybit: Bybit = bybit
+        self.config: Config = config
 
-        self.rows = 5
-        self.listOfValues = [[0] * self.limitOfCandles for _ in range( self.rows)]
+        self.listOfValues = [[0] * self.limitOfCandles for _ in range(5)]
 
         self.Last_Candle_Start_time = 0
         self.currentCandleTime = 60000
-
 
         self.priseRound = None
         self.qtyStepForRound = None
@@ -30,6 +29,7 @@ class Coin:
 
     def Round_Qty (self, qty):
         return (round(float(qty) / self.qtyStepForRound) * self.qtyStepForRound)
+
     def Round_Prise (self, prise):
         return round(float(prise), self.priseRound)
 
@@ -38,8 +38,8 @@ class Coin:
         self.qtyStepForRound = float(response['lotSizeFilter']['qtyStep'])
 
     def Process_Values(self, data):
-        ps = PriceStamp(data["data"][0])
-        
+        # ps = PriceStamp(data["data"][0]) # preparing to use PriceStamp
+
         if (int(data['data'][0]['start']) == int(self.Last_Candle_Start_time)):
 
             # self.List_of_walues[0][self.limitOfCandles-1] = float(data['data'][0]['open'])
@@ -63,7 +63,7 @@ class Coin:
             self.currentCandleTime = int(data['data'][0]['timestamp'])-int(data['data'][0]['start'])
         else:
             coin = [self.coin]
-            result = asyncio.run(self.Bybit.Get_Cline_For_all(coin, self.limitOfCandles))
+            result = asyncio.run(self.bybit.Get_Cline_For_all(coin, self.limitOfCandles))
 
             if (int(result[0]['retCode']) == 0):
                 self.coins[result[0]['result']['symbol']].Inicialize(result[0])
@@ -72,9 +72,9 @@ class Coin:
 
             warn ("Data come after one candle, restructing....")
             warn (data['topic'])
-        CONDITION(self.config, self.Bybit, self)
+        CONDITION(self.config, self.bybit, self)
 
-    def Inicialize (self, data):
+    def initialize (self, data):
         for i in range (0, self.limitOfCandles):
             self.listOfValues[0][i] = float(data['result']['list'][i][1])
             self.listOfValues[1][i] = float(data['result']['list'][i][2])
@@ -88,42 +88,35 @@ class Coin:
 
 
 class CoinHab:
-    def __init__(self, conf, Bybit):
+    def __init__(self, conf: Config, bybit: Bybit):
         self.animation = SimpleAnimation()
-        self.coins = {}              # Створюємо масив об'єктів монет
-        self.tresh_text = 'kline.1.' # зайвий текст що приходить в відповіді від сокета. Він видаляється щоб лишити лише назву монети
-        self.Coin_Set (conf, Bybit)
-        self.SetRounds(conf, Bybit)
+        self.coins: Dict[str, Coin] = {}
+        self.trashText = 'kline.1.' # зайвий текст що приходить в відповіді від сокета. Він видаляється щоб лишити лише назву монети
+        self.coinSet (conf, bybit)
+        self.SetRounds(conf, bybit)
         inform (f"Founded {len(self.coins)} Coins")
 
-    def SetRounds(self, conf ,Bybit):
-        response = Bybit.Get_Instruments_Info()
+    def SetRounds(self, conf, bybit: Bybit):
+        response = bybit.Get_Instruments_Info()
         for i in response["result"]["list"]:
             for j in ((conf.getValue("exchange", "Coins"))):
                 if (i["symbol"] == j):
                     self.coins[j].Set_Round(i)
 
-        # pr (response)
-
-
     def handledr (self, message):
-        # if (message['topic'].replace(self.tresh_text, "") == 'ATOMUSDT'):
         inform(self.animation.step(), en="\r")
-        self.coins[message['topic'].replace(self.tresh_text, "")].Process_Values(message)
-        # test(self.coins[message['topic'].replace(self.tresh_text, "")].Get_Last_Prise())
-        # coin = self.coins[message['topic'].replace(self.tresh_text, "")]  # те саме але зручніше для розуміння
-        # coin.Process_Values(message)
+        self.coins[message['topic'].replace(self.trashText, "")].Process_Values(message)
 
-    def Initialize_Coins (self, conf, Bybit):
-        result = asyncio.run(Bybit.Get_Cline_For_all(conf.getValue("exchange", "Coins"), conf.getValue("exchange", "Trade", "Max count of candles for average a trade volume")))
+
+    def Initialize_Coins (self, conf: Config, bybit: Bybit):
+        result = asyncio.run(bybit.Get_Cline_For_all(conf.getValue("exchange", "Coins"), conf.getValue("exchange", "Trade", "Max count of candles for average a trade volume")))
 
         for i in range (len(self.coins)):
             if (int(result[i]['retCode']) == 0):
-                self.coins[result[i]['result']['symbol']].Inicialize(result[i])
+                self.coins[result[i]['result']['symbol']].initialize(result[i])
             else:
                 failed (result[i])
 
-    def Coin_Set (self, conf, Bybit):
-        for i in ((conf.getValue("exchange", "Coins"))):  # створюємо масив монет та заповнюємо його даними з конфігураційного файлу
-            obj = Coin(conf, i, Bybit)                                          # Створення об'єкта з переданими значеннями
-            self.coins[i] = obj
+    def coinSet (self, conf: Config, bybit: Bybit):
+        for coin in ((conf.getValue("exchange", "Coins"))):
+            self.coins[coin] = Coin(conf, coin, bybit)
