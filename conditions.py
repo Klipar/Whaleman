@@ -1,9 +1,12 @@
 from easy.message import failed, success, inform, warn, test, pr
+from easy import Config
+from bybit import Bybit
+from coin import Coin
 
-def Checking_turnover (conf, Bybit, data, coin):     # перевірка на наявність достатньо високих обємів торгів. Потім додати коофіцієнт часу.
+def Checking_turnover (conf: Config, bybit: Bybit, data, coin: Coin):     # перевірка на наявність достатньо високих обємів торгів. Потім додати коофіцієнт часу.
     average = float(calculate_average(data))
     if (conf.getValue("exchange", "Trade", "time factor for trading turnover") == "linear"):
-        average = (average*(coin.Curent_Candle_Time/(Bybit.Candel_time*60000)))
+        average = (average*(coin.Curent_Candle_Time/(bybit.Candel_time*60000)))
     if (((float(data[0])/average)*100) > float(conf.getValue("exchange", "Trade", "Triger turnover persent"))):
         return 0
     return 1

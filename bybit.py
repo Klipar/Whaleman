@@ -167,7 +167,7 @@ class Bybit:
             self.ws.kline_stream(
                 interval=self.Candel_time,
                 symbol=symbol,
-                callback=coin_hab.handledr
+                callback=coin_hab.handler
             )
             bar.ShoveAndUpdate(1)
 
