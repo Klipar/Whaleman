@@ -1,5 +1,5 @@
 from easy import Config, Logger
-from socketClient import SocketClient
+from loggingBot.socket.socketClient import SocketClient
 
 class TelegramLogger:
     def __init__(self, config: Config, logger: Logger = None):
@@ -31,3 +31,6 @@ class TelegramLogger:
                             "qty" : qty,
                             "leverage" : leverage}
         await self.socketClient.send(templates)
+
+    async def disconnect(self) -> None:
+        await self.socketClient.disconnect()

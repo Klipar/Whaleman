@@ -1,7 +1,7 @@
 from pybit.unified_trading import WebSocket
 from pybit.unified_trading import HTTP
 from easy.animations import LineProgressBar
-from telegramLogger import TelegramLogger
+from loggingBot.telegramLoggerClient import TelegramLogger
 from easy.message import *
 from easy import Config
 import asyncio

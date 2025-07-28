@@ -1,7 +1,7 @@
 from easy.message import *
 from easy import Config
-from coin import Coin
-from queueManager import QueueManager
+from tradingBot.coins.coin import Coin
+from tradingBot.model.queueManager import QueueManager
 
 def checkingTurnover(config: Config, pricesQueueManager: QueueManager):
     averageTurnover = pricesQueueManager.getAverage("turnover")

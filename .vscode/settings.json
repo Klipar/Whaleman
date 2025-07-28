@@ -3,6 +3,7 @@
         "bybit",
         "peername",
         "popleft",
-        "unrealised"
+        "unrealised",
+        "venv"
     ]
 }

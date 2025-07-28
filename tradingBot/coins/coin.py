@@ -1,10 +1,10 @@
-from queueManager import QueueManager
+from tradingBot.model.queueManager import QueueManager
 from easy import Config
-from bybit import Bybit
+from tradingBot.exchange.bybit import Bybit
 
 class Coin:
     def __init__(self, config: Config, coin: str, bybit: Bybit):
-        from conditions import checkOrderConditions
+        from tradingBot.conditions import checkOrderConditions
         self.checkOrderConditions = checkOrderConditions
 
         self.bybit: Bybit = bybit

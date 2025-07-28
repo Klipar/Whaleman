@@ -11,7 +11,7 @@ class SocketClient:
         self.reader: asyncio.StreamReader = None
         self.writer: asyncio.StreamWriter = None
 
-    async def connect(self):
+    async def connect(self) -> None:
         self.reader, self.writer = await asyncio.open_connection(self.config.getValue("Socket server", "host"), self.config.getValue("Socket server", "port"))
         self.logger.inform(f"Connection to {self.config.getValue("Socket server", "host")}:{self.config.getValue("Socket server", "port")}")
 
@@ -24,7 +24,7 @@ class SocketClient:
         self.writer.write((json.dumps(data) + '\n').encode('utf-8'))
         await self.writer.drain()
 
-    async def listen(self):
+    async def listen(self) -> None:
         try:
             while True:
                 data = await self.reader.readline()
@@ -37,3 +37,11 @@ class SocketClient:
         finally:
             self.writer.close()
             await self.writer.wait_closed()
+
+    async def disconnect(self) -> None:
+        if (self.writer):
+            try:
+                self.writer.close()
+                await self.writer.wait_closed()
+            except Exception as e:
+                self.logger.failed("Failed to close socket connection:\n"+e)

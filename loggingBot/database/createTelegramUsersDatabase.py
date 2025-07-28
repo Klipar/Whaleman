@@ -1,7 +1,6 @@
 from easy import Config
 import sqlite3
 
-
 config = Config(configPath="Configs/telegramBot.json",
                 onFailedToLoadConfig=lambda: exit(0))
 

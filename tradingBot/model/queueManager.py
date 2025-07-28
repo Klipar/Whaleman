@@ -1,7 +1,7 @@
 from easy import Logger
 from typing import Dict, List, Union
-from FIFOQueue import FIFOQueue
-from priceStamp import PriceStamp
+from tradingBot.model.FIFOQueue import FIFOQueue
+from tradingBot.model.priceStamp import PriceStamp
 
 class QueueManager:
     def __init__(self, data: Dict[str, Union[str, int]]):

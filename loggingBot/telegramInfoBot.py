@@ -4,8 +4,8 @@ from telegram import Bot
 from typing import Any, Dict, List
 import asyncio
 from easy import Config, Logger
-from positionMessageSynthesizer import PositionMessageSynthesizer
-from telegramUsersDatabase import TelegramUsersDatabase
+from loggingBot.positionMessageSynthesizer import PositionMessageSynthesizer
+from loggingBot.database.telegramUsersDatabase import TelegramUsersDatabase
 
 class TeleGramLogBot:
     def __init__(self, config: Config, database: TelegramUsersDatabase, logger: Logger = Logger()):
@@ -29,7 +29,7 @@ class TeleGramLogBot:
         self.logger.success("Telegram bot initialized successfully")
 
     async def onStartup(self, app):
-            from socketServer import SocketServer
+            from loggingBot.socket.socketServer import SocketServer
 
             async def sendMassageToAll(data: Dict[str, Any]):
                 await self.sendMessageToAll(data["message"], self.database.getTelegramIDForAllSubscribedUsers())
@@ -107,18 +107,3 @@ class TeleGramLogBot:
 
     def run(self):
             self.application.run_polling()
-
-
-def startTelegramBot():
-    config = Config(configPath="Configs/telegramBot.json",
-                    logger=Logger(2),
-                    onFailedToLoadConfig=lambda: exit(0))
-
-    bot = TeleGramLogBot(config = config,
-                         database =TelegramUsersDatabase(config),
-                         logger=Logger())
-
-    bot.run()
-
-if __name__ == "__main__":
-    startTelegramBot()

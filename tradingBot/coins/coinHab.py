@@ -1,9 +1,9 @@
 from easy import failed, inform, Config
 from typing import Dict
 import asyncio
-from bybit import Bybit
+from tradingBot.exchange.bybit import Bybit
 from easy.animations import *
-from coin import Coin
+from tradingBot.coins.coin import Coin
 
 class CoinHab:
     def __init__(self, conf: Config, bybit: Bybit):
