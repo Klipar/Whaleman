@@ -18,12 +18,16 @@ if [ ! -d "$environmentDit" ]; then
         bash "$installScript"
 
         echo "Dependencies installed!"
+
+        bash "$SCRIPT_DIR/launch.sh"
     else
         echo "Installation canceled. Exiting..."
         exit 0
     fi
+
+    else
+        echo "Starting bots..."
+
+        source .venv/bin/activate
+        bash "$startScript"
 fi
-
-echo "Starting bots..."
-
-bash "$startScript"

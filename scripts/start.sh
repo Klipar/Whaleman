@@ -10,8 +10,6 @@ clear
 
 trap cleanup SIGINT SIGTERM
 
-source .venv/bin/activate
-
 python3 telegramBotLauncher.py &
 
 sleep 3
