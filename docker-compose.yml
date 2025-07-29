@@ -1,0 +1,12 @@
+version: "3.9"
+# in a future can be separated to two separate containers (whaleman and telegram bot)
+services:
+  whaleman:
+    image: whaleman
+    build: .
+    tty: true
+    stdin_open: true
+    working_dir: /app
+    volumes:
+      - ./Configs:/app/Configs
+    command: ["bash", "./launch.sh"]
