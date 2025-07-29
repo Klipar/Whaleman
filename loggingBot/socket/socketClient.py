@@ -13,7 +13,7 @@ class SocketClient:
 
     async def connect(self) -> None:
         self.reader, self.writer = await asyncio.open_connection(self.config.getValue("Socket server", "host"), self.config.getValue("Socket server", "port"))
-        self.logger.inform(f"Connection to {self.config.getValue("Socket server", "host")}:{self.config.getValue("Socket server", "port")}")
+        self.logger.inform(f"Connection to {self.config.getValue('Socket server', 'host')}:{self.config.getValue('Socket server', 'port')}")
 
         asyncio.create_task(self.listen())
 

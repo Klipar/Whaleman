@@ -11,7 +11,7 @@ class CoinHab:
 
         self.coins: Dict[str, Coin] = {}
 
-        self.trashText = f"kline.{conf.getValue("exchange", "Trade", "Candle time")}." # extra text that comes in response from the socket. It is removed to leave only the coin name
+        self.trashText = f"kline.{conf.getValue('exchange', 'Trade', 'Candle time')}." # extra text that comes in response from the socket. It is removed to leave only the coin name
 
         self.coinSet (conf, bybit)
         self.setRounding(conf, bybit)

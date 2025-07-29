@@ -45,7 +45,7 @@ class SocketServer:
                 self.clients.discard(writer)
 
     async def start(self):
-        server = await asyncio.start_server(self.handle_client, self.config.getValue("Socket server", "host"), self.config.getValue("Socket server", "port"))
-        self.logger.inform(f"Socket server is running on {self.config.getValue("Socket server", "host")}:{self.config.getValue("Socket server", "port")}")
+        server = await asyncio.start_server(self.handle_client, self.config.getValue('Socket server', 'host'), self.config.getValue('Socket server', 'port'))
+        self.logger.inform(f"Socket server is running on {self.config.getValue('Socket server', 'host')}:{self.config.getValue('Socket server', 'port')}")
         async with server:
             await server.serve_forever()
