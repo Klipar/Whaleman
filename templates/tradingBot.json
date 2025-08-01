@@ -1,0 +1,44 @@
+{
+    "GENERAL INFO": "It's general config.",
+    "Version of config": "2.0",
+    "exchange": {
+        "Bybit": {
+            "API Public Key": "******************",
+            "API Secret Key": "************************************",
+            "Category of trading": "linear",
+            "SettleCoin": "USDT",
+            "Testnet": "False"
+        },
+        "Coins":[
+                    "DOTUSDT"
+                ],
+        "Trade":{
+            "Max Trading Balance in USDT": 10,
+            "First step in percent from trading balance": 10,
+            "Next steps prise in percent mowing from last order prise": 0.3,
+            "Multiplier to increase the deal value": 0.1,
+            "Sliding percent from entering prise":0.05,
+            "Max count of candles for average a trade volume": 200,
+            "Candle time": 1,
+
+            "Take profit percent from entering prise": 0.5,
+            "Stop lose percent from entering prise": 0.25,
+            "leverage": 10,
+            "Max Count of candle before allowed to close order on acceptable profit": 30,
+            "Min acceptable profit for pre force closing": 0.5,
+            "Max Count of candle before force closing order": 60,
+
+            "Max position percent from balance": 10,
+
+            "candles minimal move percents": [2, 2.5, 3],
+            "Trigger turnover percent": 400,
+
+            "time factor for trading turnover": "linear",
+
+            "No Trade": "True",
+            "Only Buy": "True",
+            "Only Sell": "False",
+            "All coins on exchange": "False"
+        }
+    }
+}

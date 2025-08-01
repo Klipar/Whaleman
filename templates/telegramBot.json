@@ -1,0 +1,80 @@
+{
+    "Telegram API token": "**********************************************",
+    "Users database": "Configs/users.db",
+
+    "Commands list": [
+                        "start", "stop", "info", "help"
+                     ],
+    "Commands" : {
+        "start": {
+            "success" : "You are successfully subscribed to receive messages from the bot.",
+            "already" : "You are already subscribed."
+        },
+        "stop" : {
+            "success" : "You have successfully unsubscribed from receiving messages from the bot.",
+            "already" : "You are already unsubscribed.",
+            "never" : "You have never been subscribed."
+        },
+        "info" : {
+            "success" : "BOT V = 2.0.0"
+        },
+        "help" : {
+            "success" : "Available commands:\n/start —> subscribe to receive messages.\n/stop —> unsubscribe from receiving messages.\n/info —> get information about the bot.\n/help —> display this message."
+        }
+
+    },
+    "Events" : {
+        "Buy" : "❗️❗️❗️️  PLACING ORDER  ❗️❗️❗️\n    ============================\n                    🟢 LONG 🟢\n            Symbol:     $symbol\n            Side:           Buy\n            Triggering prise = $prise\n            Take profit        = $takeProfit\n            Stop lose          = $stopLoss\n    -----------------------------------------------------\n            Qty                      = $qty\nValue in USDT  = $Value\n            Order type          = Limit\nTrade fee           = ?\n-----------------------------------------------------\n                Expected profit      = $profit\n                Expected losses    = $loss\n    ============================",
+        "Sell": "❗️❗️❗️️  PLACING ORDER  ❗️❗️❗️\n============================\n                    🔴 Short 🔴\n            Symbol:     $symbol\n            Side:           Sell\n            Triggering prise = $prise\n            Take profit        = $takeProfit\n            Stop lose          = $stopLoss\n-----------------------------------------------------\n            Qty                      = $qty\n            Value in USDT  = $Value\n            Order type          = Limit\n            Trade fee           = ?\n-----------------------------------------------------\n            Expected profit      = $profit\n            Expected losses    = $loss\n============================"
+    },
+
+    "Socket server" : {
+        "host" : "127.0.0.1",
+        "port" : 8888,
+
+        "Massages" : {
+            "Send to all" : {
+                "action" : "Send to all",
+                "data" : {
+                    "message" : "Default message... <0_0>"
+                }
+            },
+            "Send to admins" : {
+                "action" : "Send to admins",
+                "data" : {
+                    "message" : "Default message... <0_0>"
+                }
+            },
+            "Stop trading bot" : {
+                "action" : "Stop trading bot",
+                "data" : {
+                    "userID" : 0
+                }
+            },
+            "Start trading bot" : {
+                "action" : "Start trading bot",
+                "data" : {
+                    "userID" : 0
+                }
+            },
+            "Restart trading bot" : {
+                "action" : "Restart trading bot",
+                "data" : {
+                    "userID" : 0
+                }
+            },
+            "Place order" : {
+                "action" : "Place order",
+                "data" : {
+                    "side" : "",
+                    "prise" : 0,
+                    "takeProfit" : 0,
+                    "stopLoss" : 0,
+                    "symbol" : "",
+                    "qty" : 0,
+                    "leverage" : 0
+                }
+            }
+        }
+    }
+}

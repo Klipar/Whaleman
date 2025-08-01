@@ -50,11 +50,11 @@ class Bybit:
             qty = coin.roundQty((((self.config.getValue("exchange", "Trade", "Max Trading Balance in USDT")/100)*self.config.getValue("exchange", "Trade", "First step in percent from trading balance"))/coin.getLastPrise())*self.config.getValue("exchange", "Trade", "leverage"))
 
         if side == "Buy":
-            prise      = coin.roundPrise(lastPrice + ((lastPrice/100)*self.config.getValue("exchange", "Trade", "Sliding persent from entering prise")))
+            prise      = coin.roundPrise(lastPrice + ((lastPrice/100)*self.config.getValue("exchange", "Trade", "Sliding percent from entering prise")))
             takeProfit = coin.roundPrise(lastPrice + ((lastPrice/100)*self.config.getValue("exchange", "Trade", "Take profit percent from entering prise")))
             stopLoss   = coin.roundPrise(lastPrice - ((lastPrice/100)*self.config.getValue("exchange", "Trade", "Stop lose percent from entering prise")))
         else:
-            prise      = coin.roundPrise(lastPrice - ((lastPrice/100)*self.config.getValue("exchange", "Trade", "Sliding persent from entering prise")))
+            prise      = coin.roundPrise(lastPrice - ((lastPrice/100)*self.config.getValue("exchange", "Trade", "Sliding percent from entering prise")))
             takeProfit = coin.roundPrise(lastPrice - ((lastPrice/100)*self.config.getValue("exchange", "Trade", "Take profit percent from entering prise")))
             stopLoss   = coin.roundPrise(lastPrice + ((lastPrice/100)*self.config.getValue("exchange", "Trade", "Stop lose percent from entering prise")))
 
