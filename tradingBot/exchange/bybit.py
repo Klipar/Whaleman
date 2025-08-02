@@ -22,8 +22,7 @@ class Bybit:
 
     async def requestForPlacingOrder (self, coin, side: str):
         if (side == "Buy" and self.config.getValue("exchange", "Trade", "Only Sell") or
-            side == "Sell" and self.config.getValue("exchange", "Trade", "Only Buy") or
-            self.config.getValue("exchange", "Trade", "No Trade")):
+            side == "Sell" and self.config.getValue("exchange", "Trade", "Only Buy")):
             return
         lastPrice = coin.getLastPrise()
 
@@ -62,15 +61,20 @@ class Bybit:
 
     async def placeOrder(self, symbol, qty, prise, side, takeProfit, stopLoss, orderType = "Limit"):
         try:
-            success(self.session.place_order(
-                    category=self.config.getValue("exchange", "Bybit", "Category of trading"),
-                    symbol=symbol,
-                    side=side,
-                    orderType=orderType,
-                    qty=qty,
-                    price=prise,
-                    takeProfit=takeProfit,
-                    stopLoss=stopLoss))
+            if not self.config.getValue("exchange", "Trade", "No Trade"):
+
+                success(self.session.place_order(
+                        category=self.config.getValue("exchange", "Bybit", "Category of trading"),
+                        symbol=symbol,
+                        side=side,
+                        orderType=orderType,
+                        qty=qty,
+                        price=prise,
+                        takeProfit=takeProfit,
+                        stopLoss=stopLoss))
+
+            else:
+                qty = 0
 
             await self.telegramLogger.sendPlacingOrder(side=side,
                                                        prise=prise,

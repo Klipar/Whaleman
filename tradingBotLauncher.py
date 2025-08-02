@@ -27,8 +27,8 @@ async def main ():
 
         while True:
             await bybit.refreshPositions()
-            # globalConfig.refreshConfig()
-            # socketClientConfig.refreshConfig()
+            globalConfig.refreshConfig()
+            socketClientConfig.refreshConfig()
 
     except Exception as e:
         failed(f"Fail while running trading bot:\n{e}")
