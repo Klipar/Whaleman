@@ -8,7 +8,7 @@ from loggingBot.telegramLoggerClient import *
 
 async def main ():
     try:
-        globalConfig = Config("Configs/developing.json", Logger(2))
+        globalConfig = Config("Configs/tradingBot.json", Logger(2))
         socketClientConfig = Config("Configs/telegramBot.json", Logger(2))
 
         telegramLogger = TelegramLogger(socketClientConfig)
@@ -27,11 +27,11 @@ async def main ():
 
         while True:
             await bybit.refreshPositions()
-            globalConfig.refreshConfig()
-            socketClientConfig.refreshConfig()
+            # globalConfig.refreshConfig()
+            # socketClientConfig.refreshConfig()
 
     except Exception as e:
-        failed("Fail while running trading bot:\n"+e)
+        failed(f"Fail while running trading bot:\n{e}")
     finally:
         await telegramLogger.disconnect()
 

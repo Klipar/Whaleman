@@ -44,4 +44,4 @@ class SocketClient:
                 self.writer.close()
                 await self.writer.wait_closed()
             except Exception as e:
-                self.logger.failed("Failed to close socket connection:\n"+e)
+                self.logger.failed(f"Failed to close socket connection:\n{e}")

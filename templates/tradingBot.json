@@ -35,8 +35,8 @@
 
             "time factor for trading turnover": "linear",
 
-            "No Trade": "True",
-            "Only Buy": "True",
+            "No Trade": "False",
+            "Only Buy": "False",
             "Only Sell": "False",
             "All coins on exchange": "False"
         }
