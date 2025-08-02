@@ -1,0 +1,30 @@
+Whaleman/
+├── Configs/                  # Active configuration files and user database (you create it during installation)
+├── templates/                # Configuration templates for launching a new instance
+├── docker-compose.yml        # File to launch the entire project using Docker
+├── Dockerfile                # Dockerfile to build the image
+├── launch.sh                 # Bash script for manual launch
+├── scripts/                  # Utilities for installation/startup (e.g., install.sh, start.sh)
+├── requirements.txt          # Python dependencies
+├── LICENSE                   # License file (GPL-3.0)
+├── README.md                 # Main documentation in English
+│
+├── images/                   # Graphics and demo files
+│   ├── botLogos/             # Logos for the Telegram bot
+│   ├── charts/               # Saved trade charts
+│   └── demo/                 # GIF/PNG demonstrations of the bot in action
+│
+├── loggingBot/               # Telegram bot for logging positions and messages
+│   ├── database/             # Work with Telegram users database
+│   ├── socket/               # Socket client/server for interaction with tradingBot
+│   ├── telegramInfoBot.py    # Bot for information queries
+│   └── telegramLoggerClient.py # Trader's log client
+│
+├── tradingBot/               # Main trading bot
+│   ├── coins/                # Logic for individual coins (Coin, CoinHab)
+│   ├── exchange/             # Adapter for Bybit exchange
+│   ├── model/                # Queues, timestamps, price movement processing
+│   └── conditions.py         # Conditions for opening/closing positions
+│
+├── telegramBotLauncher.py    # Launcher for the logging Telegram bot
+└── tradingBotLauncher.py     # Launcher for the trading bot
