@@ -22,148 +22,150 @@
 
 ![Logo](images/botLogos/14.png)
 
-[Українська версія -> 🇺🇦](README.ua.md)
+[Ukrainian version -> 🇺🇦](README.ua.md)
 
-## **Whaleman** - це комплексна автоматизована система що виконує торгівлю **криптовалютами**.
-Вона складається з [торгового бота](#Trading-bot) та [інформаційно-керуючого бота](#Info-bot).
+## **Whaleman** is a comprehensive automated system designed for **cryptocurrency trading**.
+It consists of a [trading bot](#Trading-bot) and an [information and control bot](#Info-bot).
 
 ### 🤖 Trading bot
-Даний бот виконує **аналіз ринку та торгівлю** шляхом підключення до api біржі **BybiT** через інтерфейс бібліотеки `pybit`. Також він зв'язується з [інформаційно-керуючим ботом](#Info-bot) для надання логів та отримання команд керування _(ще в розробці)_.
+This bot performs **market analysis and trading** by connecting to the **Bybit** exchange API using the `pybit` library. It also interacts with the [info-control bot](#Info-bot) to provide logs and receive control commands _(functionality still in development)_.
 
 ### 📲 Info bot
-Даний бот є бекендом телеграм бота з допомогою якого виконується моніторинг роботи торгового бота та його керування. Також він розділяє ролі користувачів за рівнем доступу до функцій торгового бота.
+This bot serves as the backend for a Telegram bot used to monitor the trading bot's operation and control it. It also assigns different user roles based on their level of access to the trading bot's features.
 
-## 🧠 Принцип роботи та основна ідея
-Весь бот побудований на ідеї пошуку не вигідних ситуацій які спричиняють крупні гравці вони ж маркет мейкери або (кити) шляхом штучної та різкої зміни ціни. Їх мета підняти або опустити ціну до розміщення завершальних угод (stop loss orders) звичайних гравців та змусити їх закрити їх позиції за не вигідною для них ціною.
+## Operating Principle and Core Idea
+The entire bot is based on the idea of detecting **unfavorable market conditions** created by large players - market makers (or "whales") - through artificial and sudden price movements. Their goal is to raise or lower the price to the level where retail traders have placed their stop-loss orders, forcing them to close their positions at a **disadvantageous price**.
 
-Такі не вигідні ситуації мають подібний патерн:
-+ **Виникнення різкого сплеску об'ємів торгів (turnover)**, порівняно з його звичайними значеннями адже для маніпуляції ціною крізь валютну пару має пройти значний капітал.
-+ **Різка зміна ціни**, порівняно з звичайною швидкістю, де ціна піднімається або падає до рівнів, де розміщено більшість ордері на біржі.
+Such unfavorable situations follow a similar pattern:
++ **A sudden surge in trading volume (turnover)** compared to typical levels, as significant capital must flow through a trading pair to manipulate the price.
++ **A sharp price movement** compared to normal price dynamics, where the price rises or falls to levels where most of the exchange's orders are placed.
 
-Така ситуація для прикладу з заниженням ціни призведе до лавиноподібного продажу активів по не вигідним цінам більшості гравців, з метою зберегти хотча б щось, що почне ще більше посилить ціновий рух пікових значень. В ций момент кит має почати викупати валюту по вигідній для нього ціні і зупинити лавину, цим самим відновивши нормальні значення ціни для валютної пари.
+Such a situation, for example with a price drop, leads to an avalanche-like sell-off of assets at unfavorable prices by most traders trying to preserve at least some of their funds. This further amplifies the price movement toward extreme levels.
+At this point, the whale begins buying up the currency at a price favorable to them and stops the avalanche, thereby restoring a normal price level for the trading pair.
 
 ![Screenshots of the chart](images/charts/1.png)
 
-Саме в момент появи лавиноподібного руху активізується система `whaleman` та починає викуповувати stop loss угоди разом з китом, що спровокував цю ситуацію. Цим самим відновлюючи ринок.
+It is at the moment when the avalanche-like movement begins that the `whaleman` system activates and starts buying up stop-loss orders alongside the whale who triggered the situation, thereby helping to restore the market.
 
-## ⚙️ Trading features
-Окрім базової стратегії бот також реалізовує додаткові системи захисту від помилкових угод:
-- **Автоматична розстановка tate profit && stop loss угод**, залежно від конфігурації. Це дозволяє вберегтись у випадку нездатності кита зупинити створену ним лавину.
-- **Усереднення ціни купівлі** шляхом створення додаткових угод впродовж розвитку лавини.
-- **Аварійне закриття угод** у випадку "застою" угоди, коли ціна не повернулась за очікуваний час до take profit позиції.
-- **Можливість задавати `sliding percent`**, щоб уберегтись від входження в невигідну угоду через погане з'єднання з інтернетом та занадто різку зміну ціни.
-- **Гнучні налаштування поведінки бота** з допомогою конфігураційного файлу.
-<!--  -->
+## Trading features
+In addition to the basic strategy, the bot also implements extra protection systems against erroneous trades:
+- **Automatic placement of take-profit and stop-loss orders**, depending on the configuration. This helps protect the position in case the whale fails to stop the avalanche they initiated.
+- **Purchase price averaging** by creating additional orders during the avalanche development.
+- **Emergency order closure** in case of a "stuck" trade when the price does not return to the take-profit level within the expected time.
+- **Ability to set a `sliding percent`** to avoid entering an unfavorable trade due to poor internet connection or sudden price changes.
+- **Flexible bot behavior configuration** via a config file.
 
-## 🔧 Tecnical features
-- **Використання конфігураційних файлів в форматі `JSON`** для гнучкого налаштування поведінки системи.
-- **Використання бази даних `SQLite`** для збереження користувачів телеграм бота.
-- **Використання телеграм бота для моніторингу роботи системи та керування нею**.
-- **використання `Docker`** для швидкого запуску та уникнення проблем з залежностями.
-- **використання `Socket` та `REST` api зєднаннь з біржою через `pybit`** бібліотеку для укладання угод та моніторингу ціни.
-- **використання `Socket`** для взаємодії бота логування та торгового бота.
-- **використання `Microservices Architecture`** для розділення торгової системи та системи керування.
-- **Реалізація ролей в системі керування та поділ на адмінів та простих користувачів бота**.
-- **Система whaleman є асинхронною**, що дає можливість одночасно опрацьовувати як велику кількість телеграм користувачів так і велику кількість валютних пар на біржі.
+## Technical features
+- **Flexible system configuration** using `JSON` config files.
+- **User data storage** for the Telegram bot in an `SQLite` database.
+- **Integration with a Telegram bot** for system monitoring and control.
+- **Deployment via `Docker`** for quick startup and avoiding dependency issues.
+- **Exchange connectivity** using `Socket` and `REST` APIs through the `pybit` library for trade execution and price monitoring.
+- **Communication between the logging bot and trading bot** handled via `Socket`.
+- **Microservices architecture** to separate the trading system from the control system.
+- **Role-based access control** - division into admins and regular bot users.
+- **Asynchronous `whaleman` system**, capable of handling a large number of Telegram users and trading pairs simultaneously.
 
 ## 🚀 Installing & Deployment
 
-Встановлення та запуск системи `whaleman` можливий в 2 варіантах:
-+ Встановлення напряму на вашій системі.
-+ Встановлення з допомогою `Docker`.
-Однак перед обома з варіантів вам потірбно завантажте файли бота з допомогою `git` або напряму з github:
+Installation and launch of the `whaleman` system are possible in two ways:
++ Direct installation on your system.
++ Installation using `Docker`.
+However, before either option, you need to download the bot files using `git` or directly from GitHub:
 ```bash
-  git clone https://github.com/Klipar/Whaleman.git
+git clone https://github.com/Klipar/Whaleman.git
 ```
-Після успішного скачування згенеруйте конфігураційні файли та ініціалізуйте базу даних:
+After successful download, generate the configuration files and initialize the database:
 ```bash
-  cd whaleman && mkdir -p Configs && cp -r templates/* Configs/
+cd whaleman && mkdir -p Configs && cp -r templates/* Configs/
 ```
-Та [налаштуйте конфігураційні файли](#Configs).
-### Встановлення напряму в систему
-#### Вимоги:
-+ `Python` версії>= 3.11. Tа його модулі:
+And [configure configuration files](#Configs).
+### Direct installation on your system
+#### Requirements:
++ `Python` version>= 3.11. And its modules:
   + `pip`
   + `venv`
 + `Bash`
 
-#### Встановлення та запуск:
-в дерикторії проєкту виконайте:
+#### Installation and launch:
+In the project directory, execute:
 ```bash
-  bash launch.sh
+bash launch.sh
 ```
-При першому запуску скрипт запитає чи створити віртуальне середовище, підтвердіть це ввівши `(Yes/y)`. В подальшому скрипт просто використовуватиме його повторно.
+At the first run, the script will ask whether to create a virtual environment; confirm this by typing `(Yes/y)`. Subsequently, the script will simply reuse it.
 
-### Встановлення з допомогою `Docker`
-#### Вимоги:
+### Installation using `Docker`
+#### Requirements:
 + `Docker`
 + `Docker-compose`
 
-#### Встановлення та запуск:
-в дерикторії проєкту виконайте:
+#### Installation and launch:
+In the project directory, execute:
 ```bash
-  docker-compose up
+docker-compose up
 ```
-При першому запуску дана команда створить Docker image та запустить контейнер.
-При повторних запусках воно перезапускатиме створений контейнер.
+At the first run, this command will create the Docker image and start the container.
+On subsequent runs, it will restart the created container.
 
 ## 🛠️ Configs
-Перед завершенням встановлення та запуском `whaleman` необхідно налаштувати конфігураційні файли.
-Їх можна корегувати в будь якому текстовому редакторі.
+Before completing the installation and launching `whaleman`, it is necessary to configure the configuration files.
+They can be edited in any text editor.
 ### 🤖 Trading bot config
-Конфігураційний файл для торгового бота знаходиться за шляхом `Configs/tradingBot.json`.
-В цьому файлі вам необхідно налаштувати такі параметри:
+The configuration file for the trading bot is located at `Configs/tradingBot.json`.
+In this file, you need to configure the following parameters:
 + **"API Public Key"**
 + **"API Secret Key"**
 
-Замість `***` вставте ключі до вашого акаунту в лапках. Якщо в вас їх ще немає ви можете їх згенерувати за посиланням: [Bybit API management](https://www.bybit.com/app/user/api-management).
+Replace `***` with your account keys enclosed in quotes. If you don't have them yet, you can generate them via the following link: [Bybit API management](https://www.bybit.com/app/user/api-management).
 
-#### Також тут можна налаштувати:
-+ **"Category of trading"** - спосіб торгівлі. За замовчуванням це 'linear' що відповідає класичним деривативам. Однак також допустимі `inverse` та `spot` _(`inverse` та `spot` ще в розробці)_.
-+ **"SettleCoin"** - валюта відносно якої буде вестися торг. За замовчуванням це `USDT` однак допустима і інша валюта. Єдиним зауваженням є те що валютні пари в наступному пункті варто записувати в відношенні до вказаної валюти тут.
-+ **"Coins"** - перелік валютних пар якими торгуватиме бот.
-+ **"Max Trading Balance in USDT"** - тут можна задати баланс бота яким він торгуватиме. Також від нього рахуються розміри угод.
-+ **"First step in percent from trading balance"** - відсоток що рахується від `Max Trading Balance in USDT` і який буде первинним розміром угоди яку укладатиме бот із біржею при виявленні необхідних умов.
-+ **"Next steps prise in percent mowing from last order prise"** - відсоток руху ціни в бік лавини після якого бот виконає докупку з цілюю усереднення середньої ціни входу в позицію.
-+ **"Multiplier to increase the deal value"** - це множник з допомогою якого вираховується обє'єм докупки. Докупка виконуватиметься за наступною формулою:
+#### Here you can also configure:
++ **"Category of trading"** - the trading method. By default, it is `'linear'`, which corresponds to classic derivatives. However, `inverse` and `spot` are also allowed (_`inverse` and `spot` are still in development_).
++ **"SettleCoin"** - the currency against which trading is conducted. By default, it is `USDT`, but other currencies are also allowed. The only note is that trading pairs in the next item should be written relative to the currency specified here.
++ **"Coins"** - the list of trading pairs the bot will trade.
++ **"Max Trading Balance in USDT"** - the balance the bot will trade with. Deal sizes are also calculated from this.
++ **"First step in percent from trading balance"** - a percentage calculated from the `Max Trading Balance in USDT`, which will be the initial deal size the bot will execute on the exchange upon detecting the required conditions.
++ **"Next steps prise in percent moving from last order prise"** - the percentage price movement towards the avalanche after which the bot will make an additional purchase to average the entry price of the position.
++ **"Multiplier to increase the deal value"** - a multiplier used to calculate the volume of the additional purchase. The additional purchase will be made according to the following formula:
+
 ``` Text
 a = b * c
 Де:
-a - об'єм угоди докупки
-b - нинішній розмір позиції
+a - additional purchase volume
+b - current position size
 c - "Multiplier to increase the deal value"
 ```
 
-+ **"Sliding percent from entering prise"** - цей параметер служить для збільшення шанцу встигнути увійти в позицію при дуже різких змінах ціни. Отриманий відсоток від ціни входу в договір додається в невигідному для користувача ключі однак збільшує шанс того що біржа прийме угоду. Тобто якщо ми хочемо купити то отримане відсоткове значення від нинішньої ціни додасться до бажаної ціни покупки у випадку продажу відніметься.
-+ **"Max count of candles for average a trade volume"** - задає кількість свічок які буде використано для обчислення середнього значення об'ємів торгів (turnover). Може бути задане в межах від \[1, 1000\], однак рекомендовані значення \[100, 1000\].
-+ **"Candle time"** - час однієї свічки в хвилинах.
-+ **"Take profit percent from entering prise"** - на скільки відсотків ми очікуємо що ціна рухатиметься в нашу користь. Після досягнення відповідного руху угода завершиться.
-+ **"Stop lose percent from entering prise"** - на скільки ми очікуємо рух ціни не в нашу користь. У випадку досягнення цієї ціни угода буде аварійно завершена з метою мінімізації втрат.
-+ **"leverage"** - оскільки основний спосіб торгівлі ботом це деривативи (ф'ючерси) то даний параметер задає величину кредитного плича для розрахунків. **Він не міняє справжнє значення плеча** для цієї монети а лише використовує це значення для обрахунків необхідних значень при укладанні договору.
-+ **"Max Count of candle before allowed to close order on acceptable profit"** - Після якої кількості свічок при вигідному русі ціни на `"Min acceptable profit for pre force closing"` відсотків угоди завершиться не очікуючи закриття через параметер `"Take profit percent from entering prise"`.
-+ **"Min acceptable profit for pre force closing"** - Порогове значення відсотку руху ціни в нашу користь після досягнення якого у випадку затягнутої угоди на `"Max Count of candle before allowed to close order on acceptable profit"` свічок вона буде завершена.
-+ **"Max Count of candle before force closing order"** - максимальна кількість свічок після яких угода буде завершеною, не залежно від нинішної вартості інструменту.
-+ **"Max position percent from balance"** - максимальний розмір угоди враховуючи докуповування який може бути укладений. Вимірюється в відсотках від `"Max Trading Balance in USDT"`.
-+ **"candles minimal move percents"** - список відсотків мінімального руху ціни для відкриття позиції. Список нумеруєтсья з лівого краю починаючи з `1`, порядковий номер елементу означає кількість свічок які буде викорситано для порівняння руху ціни із значенням на цьому номері списку. У випадку з `3` елементом цього списку буде пораховано відсоткову різницю в ціні між відкриваючою ціною `3` свічки і закриваючою ціною `1` свічки _(нинішня ще не завершена свічка)_.
-+ **"Trigger turnover percent"** - Мінімальна кількість відсотків від середнього значення об'ємів торгів (turnover) яка має бути для укладення угоди.
-+ **"time factor for trading turnover"** - оскільки для підрахунку об'ємів торгів (turnover) ми будемо порівнювати об'єм торгів незакритої свічки з середнім об'ємом торгів закритих свічок потірбно вирівняти ці значення. Для цього вони будуть лінійно зсунуті на час свічки _(покищо `"linear"` це єдиний варіант вирівнювання)_.
-+ **"No Trade"** - це булевський параметер який дозволяє систему укладати договори на ринку(`True`/`False`)
-+ **"Only Buy"** - булевський параметер, при значенні `True` дозволяє лише `Buy` угоди, блокуючи `Sell`.
-+ **"Only Sell"** - булевський параметер, при значенні `True` дозволяє лише `Sell` угоди, блокуючи `Buy`.
-+ "All coins on exchange" - булевський параметер, що дозволяє почати торг на всіх валютних парах біржі _(перебуває в розробці)_
-> одночасне ввімкнення параметрів `"Only Buy"` та `"Only Sell"` призведе до еффекту ідентичному ввімкненню `"No Trade"`.
++ **"Sliding percent from entering prise"** - this parameter serves to increase the chance of entering a position during very sharp price changes. The obtained percentage from the entry price is added in a disadvantageous direction for the user but increases the chance that the exchange will accept the deal. That is, if we want to buy, the calculated percentage of the current price will be added to the desired purchase price; in the case of selling, it will be subtracted.
++ **"Max count of candles for average a trade volume"** - sets the number of candles used to calculate the average trade volume (turnover). It can be set within the range \[1, 1000\], but recommended values are \[100, 1000\].
++ **"Candle time"** - the duration of one candle in minutes.
++ **"Take profit percent from entering prise"** - the percentage by which we expect the price to move in our favor. After reaching this movement, the deal will be closed.
++ **"Stop lose percent from entering prise"** - the expected adverse price movement. If this price is reached, the deal will be closed urgently to minimize losses.
++ **"leverage"** - since the main trading method of the bot is derivatives (futures), this parameter sets the leverage amount used for calculations. **It does not change the actual leverage value** for this coin but only uses it to calculate necessary values when making a deal.
++ **"Max Count of candle before allowed to close order on acceptable profit"** - the number of candles after which the order will be closed at an acceptable profit defined by `"Min acceptable profit for pre force closing"`, without waiting for closure by the `"Take profit percent from entering price"` parameter.
++ **"Min acceptable profit for pre force closing"** - the threshold percentage of price movement in our favor, after reaching which, if the order is prolonged for `"Max Count of candle before allowed to close order on acceptable profit"` candles, it will be closed.
++ **"Max Count of candle before force closing order"** - the maximum number of candles after which the order will be forcibly closed regardless of the current instrument price.
++ **"Max position percent from balance"** - the maximum size of the position including additional purchases that can be placed. Measured as a percentage of `"Max Trading Balance in USDT"`.
++ **"candles minimal move percents"** - a list of minimum price movement percentages required to open a position. The list is indexed starting from `1`; the index represents the number of candles used to compare the price movement against the value at that list index. For example, the 3rd element of this list calculates the percentage difference between the opening price of the 3rd candle and the closing price of the 1st candle (_the current candle is still open_).
++ **"Trigger turnover percent"** - minimum percentage of the average trading volume (turnover) required to execute a trade.
++ **"time factor for trading turnover"** - since we compare the trading volume of an open candle with the average volume of closed candles, these values need to be aligned. For this, they are linearly adjusted by the candle time (_currently `"linear"` is the only alignment method_).
++ **"No Trade"** - boolean parameter that enables or disables trading on the market (`True`/`False`).
++ **"Only Buy"** - boolean parameter; when set to `True`, only allows `Buy` trades, blocking `Sell`.
++ **"Only Sell"** - boolean parameter; when set to `True`, only allows `Sell` trades, blocking `Buy`.
++ **"All coins on exchange"** - boolean parameter that enables trading on all currency pairs on the exchange (_in development_).
+> Enabling both `"Only Buy"` and `"Only Sell"` simultaneously will have the same effect as enabling `"No Trade"`.
 
 
 ### Logging bot config and database
-Конфігураційний файл для телеграм бота - адмін панелі знаходиться за шляхом `Configs/telegramBot.json`.
-В цьому файлі вам необхідно налаштувати параметер:
-+ **"Telegram API token"** - токен вашого бота.
-Його можна отримати з допомогою телеграм бота [@BotFather](https://t.me/BotFather)
+The configuration file for the Telegram bot (admin panel) is located at `Configs/telegramBot.json`.
+In this file, you need to configure the following parameter:
++ **"Telegram API token"** - your bot's token.
+  You can obtain it using the Telegram bot [@BotFather](https://t.me/BotFather)
 
-#### Також тут можна налаштувати:
-+ Змінити текст повідомлень в секціях `success`, `already`, `never`, `Buy` та `Sell`
-+ **"Users database"** - в цьому параметрі можна задати розміщення бази даних користувачів бота.
-+ Також в секції `"Socket server"` можна змінити параметри `"host"` та `"port"` на якому запуститься внутрішній socket server `Whaleman`.
+#### Here you can also configure:
++ Modify the message texts in the `success`, `already`, `never`, `Buy`, and `Sell` sections.
++ **"Users database"** - this parameter allows you to specify the location of the bot's user database.
++ In the `"Socket server"` section, you can also change the `"host"` and `"port"` parameters on which the internal `Whaleman` socket server will run.
+
 
 ## 🎬 Demo
 
@@ -181,8 +183,13 @@ c - "Multiplier to increase the deal value"
 Детальна структура репозиторію знаходиться [тут ->](structure.txt).
 
 ## 👤 About the author
+This project was created by me to deepen my skills in algorithmic strategy development, microservices, DevOps (Docker), API integration, and Telegram bots.
 
-Цей проєкт створений мною для поглиблення навичок в розробці алгоритмічних стратегій, мікросервісах, DevOps (Docker), API-інтеграції та Telegram-ботах. Якщо хочете дізнатись більше або маєте фідбек — буду радий контакту!
+The entire system was actually developed back when I was still exploring the world of cryptocurrency, as it was something new for me (around 2023 - unfortunately, the git history hasn’t been preserved).
+However, I only recently had the time to bring the project into a proper state and publish it.
+
+If you'd like to learn more or have any feedback - I'm happy to connect!
+
 
 Email: [bhdnkarpenko123@gmail.com](mailto:bhdnkarpenko123@gmail.com)
 
@@ -190,20 +197,20 @@ LinkedIn: [linkedin.com/in/bohdan-karpenko](https://www.linkedin.com/in/bohdan-k
 
 ## ⚖️ License
 
-Цей проєкт ліцензовано під умовами `GNU General Public License v3.0`.
+This project is licensed under the terms of `GNU General Public License v3.0`.
 
-Ви маєте право:
+You have the right to:
 ``` Text
-використовувати,
-змінювати,
-розповсюджувати цей програмний код
+use,
+modify,
+distribute this software code
 ```
 
-за умови, що:
+provided that:
 ``` Text
-всі похідні роботи будуть також відкриті (copyleft),
-ви зберігатимете посилання на автора оригінального проєкту,
-будь-які зміни/модифікації також повинні бути доступні під цією ж ліцензією.
+all derivative works will also be open (copyleft),
+you will retain a link to the author of the original project,
+any changes/modifications must also be available under the same license.
 ```
 
-Повний текст ліцензії — у файлі [LICENSE](LICENSE).
+The full text of the license is in the file - [LICENSE](LICENSE).

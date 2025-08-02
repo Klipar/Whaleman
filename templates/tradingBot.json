@@ -15,7 +15,7 @@
         "Trade":{
             "Max Trading Balance in USDT": 10,
             "First step in percent from trading balance": 10,
-            "Next steps prise in percent mowing from last order prise": 0.3,
+            "Next steps prise in percent moving from last order prise": 0.3,
             "Multiplier to increase the deal value": 0.1,
             "Sliding percent from entering prise":0.05,
             "Max count of candles for average a trade volume": 200,

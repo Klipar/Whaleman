@@ -32,7 +32,7 @@ class Bybit:
         for positions in self.positions:
             if positions['symbol'] == coin.coin:
                 realMove = abs(lastPrice - float(positions['avgPrice'])) # real price movement
-                minAllowedMove = (float(positions['avgPrice'])/100)*float(self.config.getValue("exchange", "Trade", "Next steps prise in percent mowing from last order prise"))    # min allowed price movement to next order
+                minAllowedMove = (float(positions['avgPrice'])/100)*float(self.config.getValue("exchange", "Trade", "Next steps prise in percent moving from last order prise"))    # min allowed price movement to next order
                 if realMove < minAllowedMove:
                     return
 
