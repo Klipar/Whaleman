@@ -20,7 +20,8 @@
             "success" : "BOT V = 2.0.0"
         },
         "help" : {
-            "success" : "Available commands:\n/start —> subscribe to receive messages.\n/stop —> unsubscribe from receiving messages.\n/info —> get information about the bot.\n/help —> display this message."
+            "success" : "Available commands:\n/start —> subscribe to receive messages.\n/stop —> unsubscribe from receiving messages.\n/info —> get information about the bot.\n/help —> display this message.",
+            "successForAdmin" : "Available commands:\n======== Regular user commands ========\n/start —> subscribe to receive messages.\n/stop —> unsubscribe from receiving messages.\n/info —> get information about the bot.\n/help —> display this message.\n\n========= Admin user commands =========\n/startWhaleman —> activate Whaleman trading bot.\n/stopWhaleman —> deactivate Whaleman trading bot.\n/statusWhaleman —> print current status of the bot.\n/getOpenOrders —> print currently opened orders."
         },
         "startWhaleman" : {
             "success" : "Sended request to start the Whaleman bot.",

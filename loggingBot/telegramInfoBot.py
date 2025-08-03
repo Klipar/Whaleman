@@ -137,7 +137,12 @@ class TeleGramLogBot:
         await update.message.reply_text(self.config.getValue("Commands", "info", "success"))
 
     async def help(self, update: Update, context: CallbackContext) -> None:
-        await update.message.reply_text(self.config.getValue("Commands", "help", "success"))
+        TelegramID = update.message.chat_id
+        if TelegramID in self.database.getTelegramIDForAllSubscribedAdmins():
+            await update.message.reply_text(self.config.getValue("Commands", "help", "successForAdmin"))
+
+        else:
+            await update.message.reply_text(self.config.getValue("Commands", "help", "success"))
 
     async def stop(self, update: Update, context: CallbackContext) -> None:
         TelegramID = update.message.chat_id
