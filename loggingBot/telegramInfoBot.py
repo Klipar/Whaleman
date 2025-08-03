@@ -6,12 +6,15 @@ import asyncio
 from easy import Config, Logger
 from loggingBot.positionMessageSynthesizer import PositionMessageSynthesizer
 from loggingBot.database.telegramUsersDatabase import TelegramUsersDatabase
+from loggingBot.socket.socketServer import SocketServer
 
 class TeleGramLogBot:
     def __init__(self, config: Config, database: TelegramUsersDatabase, logger: Logger = Logger()):
         self.logger = logger
         self.config = config
         self.database = database
+
+        self.socketServer: SocketServer = None
 
         self.logger.inform ("Initializing Telegram Logging bot...")
 
@@ -29,35 +32,41 @@ class TeleGramLogBot:
         self.logger.success("Telegram bot initialized successfully")
 
     async def onStartup(self, app):
-            from loggingBot.socket.socketServer import SocketServer
+        async def sendMassageToAll(data: Dict[str, Any]):
+            await self.sendMessageToAll(data["message"], self.database.getTelegramIDForAllSubscribedUsers())
 
-            async def sendMassageToAll(data: Dict[str, Any]):
-                await self.sendMessageToAll(data["message"], self.database.getTelegramIDForAllSubscribedUsers())
+        async def sendMassageToAdmins(data: Dict[str, Any]):
+            await self.sendMessageToAll(data["message"], self.database.getTelegramIDForAllSubscribedAdmins())
 
-            async def sendMassageToAdmins(data: Dict[str, Any]):
-                await self.sendMessageToAll(data["message"], self.database.getTelegramIDForAllSubscribedAdmins())
+        async def sendPlacingOrder(data: Dict[str, Any]):
+            await self.sendMessageToAll(self.positionMessageSynthesizer.getSynthesizerOrderMessage(data),
+                                        self.database.getTelegramIDForAllSubscribedUsers())
 
-            async def sendPlacingOrder(data: Dict[str, Any]):
-                await self.sendMessageToAll(self.positionMessageSynthesizer.getSynthesizerOrderMessage(data),
-                                            self.database.getTelegramIDForAllSubscribedUsers())
+        async def sendMassageToUser(data: Dict[str, Any]):
+            await self.sendToUser(data["userID"], data["message"])
 
-            actionsHolder = {
-                "Send to all" : sendMassageToAll,
-                "Send to admins" : sendMassageToAdmins,
-                "Place order" : sendPlacingOrder
-            }
+        actionsHolder = {
+            "Send to all" : sendMassageToAll,
+            "Send to admins" : sendMassageToAdmins,
+            "Place order" : sendPlacingOrder,
+            "Send to user" : sendMassageToUser
+        }
 
-            self.socketServer = SocketServer(config=self.config,
-                                             actionsHolder=actionsHolder,
-                                             logger=self.logger)
+        self.socketServer = SocketServer(config=self.config,
+                                         actionsHolder=actionsHolder,
+                                         logger=self.logger)
 
-            asyncio.create_task(self.socketServer.start())
+        asyncio.create_task(self.socketServer.start())
 
     def _setupHandlers(self):
         self.application.add_handler(CommandHandler("start", self.start))
         self.application.add_handler(CommandHandler("stop", self.stop))
         self.application.add_handler(CommandHandler("info", self.info))
         self.application.add_handler(CommandHandler("help", self.help))
+        self.application.add_handler(CommandHandler("stopWhaleman", self.stopWhaleman))
+        self.application.add_handler(CommandHandler("startWhaleman", self.startWhaleman))
+        self.application.add_handler(CommandHandler("statusWhaleman", self.statusWhaleman))
+        self.application.add_handler(CommandHandler("showOpenOrders", self.showOpenOrders))
 
     async def start(self, update: Update, context: CallbackContext) -> None:
         TelegramID = update.message.chat_id
@@ -70,6 +79,54 @@ class TeleGramLogBot:
             else:
                 self.database.addOrUpdateUser(TelegramID=TelegramID, subscribed=1, sudo=user[2])
             await update.message.reply_text(self.config.getValue("Commands", "start", "success"))
+
+    async def stopWhaleman(self, update: Update, context: CallbackContext) -> None:
+        TelegramID = update.message.chat_id
+        if TelegramID in self.database.getTelegramIDForAllSubscribedAdmins():
+            templates = self.config.getValue("Socket server", "Massages", "Stop trading bot")
+            templates["data"]["userID"] = TelegramID
+
+            await self.socketServer.broadcast(templates)
+            await update.message.reply_text(self.config.getValue("Commands", "stopWhaleman", "success"))
+
+        else:
+            await update.message.reply_text(self.config.getValue("Commands", "stopWhaleman", "failed"))
+
+    async def startWhaleman(self, update: Update, context: CallbackContext) -> None:
+        TelegramID = update.message.chat_id
+        if TelegramID in self.database.getTelegramIDForAllSubscribedAdmins():
+            templates = self.config.getValue("Socket server", "Massages", "Start trading bot")
+            templates["data"]["userID"] = TelegramID
+
+            await self.socketServer.broadcast(templates)
+            await update.message.reply_text(self.config.getValue("Commands", "startWhaleman", "success"))
+
+        else:
+            await update.message.reply_text(self.config.getValue("Commands", "startWhaleman", "failed"))
+
+    async def statusWhaleman(self, update: Update, context: CallbackContext) -> None:
+        TelegramID = update.message.chat_id
+        if TelegramID in self.database.getTelegramIDForAllSubscribedAdmins():
+            templates = self.config.getValue("Socket server", "Massages", "Get status of whaleman bot")
+            templates["data"]["userID"] = TelegramID
+
+            await self.socketServer.broadcast(templates)
+            await update.message.reply_text(self.config.getValue("Commands", "statusWhaleman", "success"))
+
+        else:
+            await update.message.reply_text(self.config.getValue("Commands", "statusWhaleman", "failed"))
+
+    async def showOpenOrders(self, update: Update, context: CallbackContext) -> None:
+        TelegramID = update.message.chat_id
+        if TelegramID in self.database.getTelegramIDForAllSubscribedAdmins():
+            templates = self.config.getValue("Socket server", "Massages", "Get open orders")
+            templates["data"]["userID"] = TelegramID
+
+            await self.socketServer.broadcast(templates)
+            await update.message.reply_text(self.config.getValue("Commands", "showOpenOrders", "success"))
+
+        else:
+            await update.message.reply_text(self.config.getValue("Commands", "showOpenOrders", "failed"))
 
     async def info(self, update: Update, context: CallbackContext) -> None:
         await update.message.reply_text(self.config.getValue("Commands", "info", "success"))

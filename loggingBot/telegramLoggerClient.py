@@ -1,12 +1,16 @@
+from typing import Any, Callable, Dict
 from easy import Config, Logger
 from loggingBot.socket.socketClient import SocketClient
 
 class TelegramLogger:
-    def __init__(self, config: Config, logger: Logger = None):
+    def __init__(self, config: Config, actionsHolder: Dict[str, Callable], logger: Logger = None):
         self.logger: Logger = logger if logger else Logger()
         self.config: Config = config
 
-        self.socketClient: SocketClient = SocketClient(config)
+        self.socketClient: SocketClient = SocketClient(config, actionsHolder)
+
+    def isConnect(self) -> bool:
+        return self.socketClient.isConnect()
 
     async def connect(self) -> None:
         await self.socketClient.connect()
@@ -34,3 +38,6 @@ class TelegramLogger:
 
     async def disconnect(self) -> None:
         await self.socketClient.disconnect()
+
+    async def sendToUser(self, data: Dict[str, Any]) -> None:
+        await self.socketClient.send(data)
