@@ -12,8 +12,6 @@ trap cleanup SIGINT SIGTERM
 
 python3 telegramBotLauncher.py &
 
-sleep 3
-
 python3 tradingBotLauncher.py &
 
 wait
