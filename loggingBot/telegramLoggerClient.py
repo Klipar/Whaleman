@@ -45,3 +45,10 @@ class TelegramLogger:
         templates["data"]["message"] = message
 
         await self.socketClient.send(templates)
+
+    async def sendOpenOrders(self, userID: int, ordersData: str) -> None:
+        templates = self.config.getValue("Socket server", "Massages", "Send open orders")
+        templates["data"]["userID"] = userID
+        templates["data"]["ordersData"] = ordersData
+
+        await self.socketClient.send(templates)

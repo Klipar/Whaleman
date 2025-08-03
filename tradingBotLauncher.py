@@ -1,5 +1,5 @@
 import asyncio
-from multiprocessing import Process, Event
+from multiprocessing import Process, Manager
 from typing import Any, Dict
 from easy import Config, Logger
 from loggingBot.telegramLoggerClient import TelegramLogger
@@ -17,10 +17,13 @@ class TradingBotManager:
         actionsHolder = {
             "Stop trading bot": self.stopTradingBot,
             "Start trading bot": self.startTradingBot,
-            "Get status of whaleman bot": self.getTradingBotStatus}
+            "Get status of whaleman bot": self.getTradingBotStatus,
+            "Get open orders": self.getOpenOrders}
 
         self.telegramLogger: TelegramLogger = TelegramLogger(self.socketClientConfig, actionsHolder)
 
+        manager = Manager()
+        self.sharedData = manager.dict()
         self.process = None
 
     async def startTradingBot(self, data: Dict[str, Any]):
@@ -34,7 +37,7 @@ class TradingBotManager:
             await self.telegramLogger.sendToAll(self.socketClientConfig.getValue("Commands", "startWhaleman", "finished"))
 
     async def stopTradingBot(self, data: Dict[str, Any]):
-        if self.process is None and not self.process.is_alive():
+        if self.process is None or not self.process.is_alive():
             await self.telegramLogger.sendToUser(data["userID"], self.socketClientConfig.getValue("Commands", "stopWhaleman", "already"))
 
         else:
@@ -52,7 +55,17 @@ class TradingBotManager:
             await self.telegramLogger.sendToUser(data["userID"], self.socketClientConfig.getValue("Commands", "statusWhaleman", "stopped"))
 
     async def getOpenOrders(self, data: Dict[str, Any]):
-        pass
+        if self.process is None or not self.process.is_alive():
+            await self.telegramLogger.sendToUser(data["userID"], self.socketClientConfig.getValue("Commands", "getOpenOrders", "botStopped"))
+
+        else:
+            orderData = self.sharedData.get("positions")
+
+            if orderData is None:
+                await self.telegramLogger.sendToUser(data["userID"], self.socketClientConfig.getValue("Commands", "getOpenOrders", "noData"))
+
+            else:
+                await self.telegramLogger.sendOpenOrders(data["userID"], orderData)
 
     def _runBotWrapper(self):
         asyncio.run(self._runBot())
@@ -61,17 +74,18 @@ class TradingBotManager:
         try:
             await self.telegramLogger.sendToAll("Starting trading bot...")
 
-            bybit = Bybit(self.globalConfig, self.telegramLogger)
-            await bybit.refreshPositions()
+            self.bybit = Bybit(self.globalConfig, self.telegramLogger)
+            await self.bybit.refreshPositions()
 
-            coin_hab = CoinHab(self.globalConfig, bybit)
-            await coin_hab.initializeCoins(bybit)
+            self.coin_hab = CoinHab(self.globalConfig, self.bybit)
+            await self.coin_hab.initializeCoins(self.bybit)
 
-            await bybit.subscribe(coin_hab)
+            await self.bybit.subscribe(self.coin_hab)
             await self.telegramLogger.sendToAll("Bot started successfully!")
 
             while self.process and self.process.is_alive():
-                await bybit.refreshPositions()
+                await self.bybit.refreshPositions()
+                self.sharedData["positions"] = self.bybit.positions
                 await asyncio.sleep(5)
 
         except Exception as e:

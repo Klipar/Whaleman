@@ -1,9 +1,10 @@
+import json
 from string import Template
 from typing import Any, Dict
 
 from easy import Config, Logger
 
-class PositionMessageSynthesizer:
+class LoggingMessageSynthesizer:
     def __init__(self, config: Config, logger: Logger = Logger()):
         self.config = config
         self.logger = logger
@@ -24,3 +25,10 @@ class PositionMessageSynthesizer:
                                                loss=loss)
 
         return synthesizedString
+
+    def getSynthesizerOrderListMessage(self, data: Dict[str, Any]) -> str:
+        if data["ordersData"] == []:
+            return self.config.getValue("Events", "NoOpenedOrders")
+
+        template = Template(self.config.getValue("Events", "openedOrders"))
+        return template.substitute(ordersData=json.dumps(data["ordersData"], indent=4))
