@@ -1,4 +1,5 @@
 import asyncio
+from multiprocessing import Process, Event
 from typing import Any, Dict
 from easy import Config, Logger
 from loggingBot.telegramLoggerClient import TelegramLogger
@@ -15,24 +16,21 @@ class TradingBotManager:
 
         actionsHolder = {
             "Stop trading bot": self.stopTradingBot,
-            "Start trading bot": self.startTradingBot
-        }
+            "Start trading bot": self.startTradingBot}
+
         self.telegramLogger: TelegramLogger = TelegramLogger(self.socketClientConfig, actionsHolder)
 
-        self.botTask = None
-        self.running = False
-
-
+        self.process = None
 
     async def startTradingBot(self, data: Dict[str, Any]):
         templates = self.socketClientConfig.getValue("Socket server", "Massages", "Send to user")
         templates["data"]["userID"] = data["userID"]
-        if self.running:
+        if self.process and self.process.is_alive():
             templates["data"]["message"] = self.socketClientConfig.getValue("Commands", "startWhaleman", "already")
 
         else:
-            self.running = True
-            self.botTask = asyncio.create_task(self._run_bot())
+            self.process = Process(target=self._run_bot_wrapper)
+            self.process.start()
             templates["data"]["message"] = self.socketClientConfig.getValue("Commands", "startWhaleman", "finished")
 
         await self.telegramLogger.sendToUser(templates)
@@ -40,17 +38,14 @@ class TradingBotManager:
     async def stopTradingBot(self, data: Dict[str, Any]):
         templates = self.socketClientConfig.getValue("Socket server", "Massages", "Send to user")
         templates["data"]["userID"] = data["userID"]
-        if not self.running:
+        if self.process is None and not self.process.is_alive():
             templates["data"]["message"] = self.socketClientConfig.getValue("Commands", "stopWhaleman", "already")
 
         else:
-            self.running = False
-            if self.botTask:
-                self.botTask.cancel()
-                try:
-                    await self.botTask
-                except asyncio.CancelledError:
-                    templates["data"]["message"] = self.socketClientConfig.getValue("Commands", "stopWhaleman", "finished")
+            self.process.terminate()
+            self.process.join()
+            self.process = None
+            templates["data"]["message"] = self.socketClientConfig.getValue("Commands", "stopWhaleman", "finished")
 
         await self.telegramLogger.sendToUser(templates)
 
@@ -60,9 +55,11 @@ class TradingBotManager:
     async def getOpenOrders(self, data: Dict[str, Any]):
         pass
 
+    def _run_bot_wrapper(self):
+        asyncio.run(self._run_bot())
+
     async def _run_bot(self):
         try:
-
             await self.telegramLogger.sendToAll("Starting trading bot...")
 
             bybit = Bybit(self.globalConfig, self.telegramLogger)
@@ -74,7 +71,7 @@ class TradingBotManager:
             await bybit.subscribe(coin_hab)
             await self.telegramLogger.sendToAll("Bot started successfully!")
 
-            while self.running:
+            while self.process and self.process.is_alive():
                 await bybit.refreshPositions()
                 await asyncio.sleep(5)
 
