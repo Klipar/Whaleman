@@ -28,7 +28,7 @@ class TradingBotManager:
             await self.telegramLogger.sendToUser(data["userID"], self.socketClientConfig.getValue("Commands", "startWhaleman", "already"))
 
         else:
-            self.process = Process(target=self._run_bot_wrapper)
+            self.process = Process(target=self._runBotWrapper)
             self.process.start()
 
             await self.telegramLogger.sendToAll(self.socketClientConfig.getValue("Commands", "startWhaleman", "finished"))
@@ -54,10 +54,10 @@ class TradingBotManager:
     async def getOpenOrders(self, data: Dict[str, Any]):
         pass
 
-    def _run_bot_wrapper(self):
-        asyncio.run(self._run_bot())
+    def _runBotWrapper(self):
+        asyncio.run(self._runBot())
 
-    async def _run_bot(self):
+    async def _runBot(self):
         try:
             await self.telegramLogger.sendToAll("Starting trading bot...")
 
