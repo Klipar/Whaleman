@@ -3,7 +3,8 @@
     "Users database": "Configs/users.db",
 
     "Commands list": [
-                        "start", "stop", "info", "help"
+                    "start", "stop", "info", "help", "stopWhaleman",
+                    "startWhaleman", "statusWhaleman", "showOpenOrders"
                      ],
     "Commands" : {
         "start": {
@@ -20,7 +21,31 @@
         },
         "help" : {
             "success" : "Available commands:\n/start —> subscribe to receive messages.\n/stop —> unsubscribe from receiving messages.\n/info —> get information about the bot.\n/help —> display this message."
+        },
+        "startWhaleman" : {
+            "success" : "Sended request to start the Whaleman bot.",
+            "finished" : "Launching Whaleman trading bot!",
+            "already" : "Trading bot already started.",
+            "failed" : "You have not enough right to start the Whaleman"
+        },
+        "stopWhaleman" : {
+            "success" : "Sended request to stop the Whaleman bot.",
+            "finished" : "Whaleman bot stopped successfully!",
+            "already" : "Trading bot already stopped.",
+            "failed" : "You have not enough right to start the Whaleman"
+        },
+        "statusWhaleman" : {
+            "success" : "Sended request to get status data from Whaleman bot.",
+            "failed" : "You have not enough right to see Whaleman's status",
+            "working" : "Currently bot working.",
+            "stopped" : "Currently bot stopped."
         }
+        ,
+        "showOpenOrders" : {
+            "success" : "Sended request to get opened orders from Whaleman bot.",
+            "failed" : "You have not enough right to see Whaleman's status"
+        }
+
 
     },
     "Events" : {
@@ -57,10 +82,23 @@
                     "userID" : 0
                 }
             },
-            "Restart trading bot" : {
-                "action" : "Restart trading bot",
+            "Get status of whaleman bot" : {
+                "action" : "Get status of whaleman bot",
                 "data" : {
                     "userID" : 0
+                }
+            },
+            "Get open orders" : {
+                "action" : "Show open orders",
+                "data" : {
+                    "userID" : 0
+                }
+            },
+            "Send to user": {
+                "action" : "Send to user",
+                "data" : {
+                    "userID" : 0,
+                    "message" : "Default message... <0_0>"
                 }
             },
             "Place order" : {

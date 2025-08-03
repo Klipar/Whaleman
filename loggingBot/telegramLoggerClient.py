@@ -39,5 +39,9 @@ class TelegramLogger:
     async def disconnect(self) -> None:
         await self.socketClient.disconnect()
 
-    async def sendToUser(self, data: Dict[str, Any]) -> None:
-        await self.socketClient.send(data)
+    async def sendToUser(self, userID: int, message: str) -> None:
+        templates = self.config.getValue("Socket server", "Massages", "Send to user")
+        templates["data"]["userID"] = userID
+        templates["data"]["message"] = message
+
+        await self.socketClient.send(templates)

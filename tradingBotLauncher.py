@@ -16,7 +16,8 @@ class TradingBotManager:
 
         actionsHolder = {
             "Stop trading bot": self.stopTradingBot,
-            "Start trading bot": self.startTradingBot}
+            "Start trading bot": self.startTradingBot,
+            "Get status of whaleman bot": self.getTradingBotStatus}
 
         self.telegramLogger: TelegramLogger = TelegramLogger(self.socketClientConfig, actionsHolder)
 
@@ -24,36 +25,31 @@ class TradingBotManager:
 
     async def startTradingBot(self, data: Dict[str, Any]):
         if self.process and self.process.is_alive():
-            templates = self.socketClientConfig.getValue("Socket server", "Massages", "Send to user")
-            templates["data"]["userID"] = data["userID"]
-            templates["data"]["message"] = self.socketClientConfig.getValue("Commands", "startWhaleman", "already")
+            await self.telegramLogger.sendToUser(data["userID"], self.socketClientConfig.getValue("Commands", "startWhaleman", "already"))
 
         else:
             self.process = Process(target=self._run_bot_wrapper)
             self.process.start()
 
-            templates = self.socketClientConfig.getValue("Socket server", "Massages", "Send to all")
-            templates["data"]["message"] = self.socketClientConfig.getValue("Commands", "startWhaleman", "finished")
-
-        await self.telegramLogger.sendToUser(templates)
+            await self.telegramLogger.sendToAll(self.socketClientConfig.getValue("Commands", "startWhaleman", "finished"))
 
     async def stopTradingBot(self, data: Dict[str, Any]):
         if self.process is None and not self.process.is_alive():
-            templates = self.socketClientConfig.getValue("Socket server", "Massages", "Send to user")
-            templates["data"]["userID"] = data["userID"]
-            templates["data"]["message"] = self.socketClientConfig.getValue("Commands", "stopWhaleman", "already")
+            await self.telegramLogger.sendToUser(data["userID"], self.socketClientConfig.getValue("Commands", "stopWhaleman", "already"))
 
         else:
             self.process.terminate()
             self.process.join()
             self.process = None
-            templates = self.socketClientConfig.getValue("Socket server", "Massages", "Send to all")
-            templates["data"]["message"] = self.socketClientConfig.getValue("Commands", "stopWhaleman", "finished")
 
-        await self.telegramLogger.sendToUser(templates)
+            await self.telegramLogger.sendToAll(self.socketClientConfig.getValue("Commands", "stopWhaleman", "finished"))
 
     async def getTradingBotStatus(self, data: Dict[str, Any]):
-        pass
+        if self.process and self.process.is_alive():
+            await self.telegramLogger.sendToUser(data["userID"], self.socketClientConfig.getValue("Commands", "statusWhaleman", "working"))
+
+        else:
+            await self.telegramLogger.sendToUser(data["userID"], self.socketClientConfig.getValue("Commands", "statusWhaleman", "stopped"))
 
     async def getOpenOrders(self, data: Dict[str, Any]):
         pass
