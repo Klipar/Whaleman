@@ -179,8 +179,8 @@ In this file, you need to configure the following parameter:
   <img src="images/demo/6.png" width="43%" />
 </p>
 
-## 📁 Структура репозиторію
-Детальна структура репозиторію знаходиться [тут ->](structure.txt).
+## 📁 Repository structure
+The detailed structure of the repository can be found [here ->](structure.txt).
 
 ## 👤 About the author
 This project was created by me to deepen my skills in algorithmic strategy development, microservices, DevOps (Docker), API integration, and Telegram bots.
