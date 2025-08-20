@@ -129,7 +129,7 @@ Replace `***` with your account keys enclosed in quotes. If you don't have them 
 
 ``` Text
 a = b * c
-Де:
+Where:
 a - additional purchase volume
 b - current position size
 c - "Multiplier to increase the deal value"
